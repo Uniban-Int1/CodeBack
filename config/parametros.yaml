@@ -1,0 +1,24 @@
+# Parámetros del dominio. NO van dentro del código: se ajustan aquí.
+# Cada valor debe indicar su procedencia (T-05).
+
+acarreo:
+  cable_via:
+    capacidad_racimos_por_viaje: 65      # fuente: Ordoñez-Avila y Perdomo-Perdomo (2019), rango 60-70
+    distancia_referencia_m: 800          # fuente: ídem
+    minutos_por_viaje: 40                # fuente: ídem (400 m en ~40 min); AJUSTAR con dato de campo
+  traccion_animal:
+    capacidad_racimos_por_viaje: 60      # fuente: PENDIENTE — levantar con Equipo 3
+    minutos_por_viaje: 45                # fuente: PENDIENTE
+
+empaque:
+  minutos_por_parcela: 120               # fuente: PENDIENTE — levantar con Equipo 3
+
+consumo_unitario:
+  # unidades de insumo por racimo. AJUSTAR con datos reales de Unibán.
+  cajas: 0.85                            # fuente: PENDIENTE
+  carton: 0.85                           # fuente: PENDIENTE
+  bolsas: 1.00                           # fuente: PENDIENTE
+
+planificacion:
+  horizonte: semanal
+  margen_seguridad_min: 30               # holgura antes del cierre de ventana

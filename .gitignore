@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.db
+*.sqlite3
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+models_entrenados/*.pkl
+data/historico/
+.DS_Store
+.idea/
+.vscode/

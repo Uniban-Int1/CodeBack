@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Logística Plátano — Unibán{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/estilo.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Plan de recolección y transporte</h1>
+    <p class="sub">Pequeños productores plataneros — Unibán, Urabá antioqueño</p>
+  </header>
+  <main>
+    {% block contenido %}{% endblock %}
+  </main>
+  <footer>
+    <p>Proyecto Integrador I · Grupo 7 · 2026-2 · Equipo 2 de 3</p>
+  </footer>
+</body>
+</html>

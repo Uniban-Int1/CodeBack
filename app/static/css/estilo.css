@@ -1,0 +1,12 @@
+:root { --verde:#1F5C3A; --ocre:#9A7208; --rojo:#A8452B; --linea:#CFD8C9; }
+body { font-family: system-ui, sans-serif; margin:0; color:#14201A; background:#F1F4EE; }
+header, main, footer { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+header { padding-top: 28px; }
+h1 { color: var(--verde); margin-bottom: 4px; }
+.sub, .meta { color:#67705F; font-size:14px; margin-top:0; }
+table { width:100%; border-collapse:collapse; margin-bottom:28px; background:#fff; }
+th { background:var(--verde); color:#fff; text-align:left; font-size:13px; padding:8px 10px; }
+td { padding:8px 10px; border-bottom:1px solid var(--linea); font-size:14px; }
+tr.riesgo td { background:#FBEDE9; }
+tr.riesgo td:last-child { color:var(--rojo); font-weight:600; }
+footer { padding:20px 24px 40px; color:#67705F; font-size:12px; }

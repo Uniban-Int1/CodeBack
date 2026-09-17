@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{# Vista del plan de recolección por día y vehículo.  Responsable: David — frente front (T-15) #}
+
+{% block contenido %}
+<section>
+  <h2>Semana {{ plan.periodo }}</h2>
+  <p class="meta">Método: <code>{{ plan.version_metodo }}</code></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Parcela</th><th>Fecha de corte</th><th>Vehículo</th>
+        <th>Orden</th><th>Carga (racimos)</th><th>Ventana</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in plan.items %}
+      <tr class="{{ 'ok' if item.cumple_ventana else 'riesgo' }}">
+        <td>{{ item.parcela_id }}</td>
+        <td>{{ item.fecha_corte }}</td>
+        <td>{{ item.vehiculo_id or '—' }}</td>
+        <td>{{ item.orden }}</td>
+        <td>{{ item.carga_estimada_racimos }}</td>
+        <td>{{ 'Cumple' if item.cumple_ventana else item.motivo }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Insumos requeridos</h2>
+  <table>
+    <thead><tr><th>Insumo</th><th>Fecha</th><th>Requerido</th><th>Inventario</th><th>Déficit</th></tr></thead>
+    <tbody>
+      {% for r in insumos %}
+      <tr class="{{ 'riesgo' if r.deficit > 0 else '' }}">
+        <td>{{ r.insumo }}</td><td>{{ r.fecha }}</td>
+        <td>{{ r.cantidad_requerida }}</td><td>{{ r.inventario_disponible }}</td>
+        <td>{{ r.deficit }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
