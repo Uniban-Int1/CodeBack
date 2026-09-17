@@ -32,4 +32,13 @@ def fecha_limite_corte(
     Lanza VentanaInalcanzable si el resultado cae antes del inicio de la ventana,
     es decir, si la parcela no alcanza a despacharse en ese periodo.
     """
-    raise NotImplementedError("T-07")
+    holgura_total = timedelta(
+        minutes=minutos_empaque + minutos_acarreo + margen_seguridad_min
+    )
+    limite = ventana.fin - holgura_total
+    if limite < ventana.inicio:
+        raise VentanaInalcanzable(
+            f"el acarreo ({minutos_acarreo} min) y el empaque ({minutos_empaque} min) "
+            f"no caben antes del cierre de la ventana ({ventana.fin.isoformat()})"
+        )
+    return limite
