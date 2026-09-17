@@ -1,6 +1,9 @@
 # Contrato de integración — v1
 
-> **Estado:** BORRADOR. Debe acordarse con los equipos 1 y 3 antes de cerrar la semana 6 (T-01).
+> **Estado:** v1 — PROPUESTA. Los 5 puntos de la sección final se resolvieron con una decisión
+> provisional para no bloquear T-02 y T-06 (ver DECISIONES.md D-007 a D-011). Cada una queda marcada
+> como propuesta y debe confirmarse con los equipos 1 y 3 en sesión de seguimiento antes de la
+> prueba de integración de la semana 12. Si algún equipo la objeta, se revisa y sube a v2.
 > **Responsable de publicar y versionar:** Equipo 2.
 > Los cambios se acuerdan en sesión de seguimiento y se numeran v1, v2…
 
@@ -119,8 +122,21 @@ Alternativa aceptada: archivo CSV versionado con las mismas columnas.
 
 ## Pendientes por acordar (T-01)
 
-- [ ] Formato exacto del `parcela_id` — que sea el mismo en los tres equipos
-- [ ] Quién es la fuente de verdad del inventario: ¿Equipo 3 siempre?
-- [ ] Frecuencia de actualización de las ventanas de despacho
-- [ ] Autenticación entre servicios: ¿token compartido o red interna?
-- [ ] Qué pasa si el Equipo 1 no ha aforado una parcela que el plan necesita
+Cada punto tiene ahora una **propuesta provisional** (ver DECISIONES.md). Siguen abiertos hasta
+que los equipos 1 y 3 los confirmen o los objeten en sesión de seguimiento.
+
+- [x] **Formato exacto del `parcela_id`** — propuesta: `P-NNN` (prefijo `P-`, tres dígitos,
+  consecutivo asignado por el Equipo 1 en el aforamiento inicial de la parcela). Es el campo más
+  peligroso: si un equipo lo genera distinto, la semana 12 se rompe. Ver D-007.
+- [x] **Fuente de verdad del inventario** — propuesta: el Equipo 3 es la única fuente de verdad;
+  nosotros solo leemos y nunca escribimos inventario, para no tener dos sistemas afirmando el
+  mismo dato. Ver D-008.
+- [x] **Frecuencia de actualización de las ventanas de despacho** — propuesta: el Equipo 3 las
+  publica con mínimo 48 h de anticipación al inicio de la ventana; si cambian con menos margen,
+  el plan ya generado no se recalcula automáticamente y queda como excepción trazada. Ver D-009.
+- [x] **Autenticación entre servicios** — propuesta: token compartido por variable de entorno
+  (`INTEGRACION_TOKEN`) en cabecera `Authorization: Bearer`, suficiente para el alcance académico;
+  no se monta infraestructura de red privada. Ver D-010.
+- [x] **Parcela sin aforar que el plan necesita** — propuesta: la parcela se excluye del plan de
+  esa semana con `motivo: "sin_aforamiento"` en `item_plan`, no se estima a ciegas ni se bloquea
+  el resto del plan. Ver D-011.

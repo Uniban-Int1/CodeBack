@@ -30,5 +30,43 @@ class ProyeccionCosecha:
     metodo: str = METODO
 
 
-def proyectar(aforamiento: Aforamiento, periodo: str, **params) -> ProyeccionCosecha:
-    raise NotImplementedError("T-06")
+def proyectar(
+    aforamiento: Aforamiento,
+    periodo: str,
+    ciclo_racimo_semanas: float,
+    factor_perdida: float = 0.0,
+) -> ProyeccionCosecha:
+    """Estima el volumen de racimos esperado de una parcela en un periodo semanal.
+
+    Supuesto del modelo determinista: cada planta completa su ciclo de racimo una vez
+    cada `ciclo_racimo_semanas` semanas, así que en una semana cualquiera se espera que
+    una fracción `1 / ciclo_racimo_semanas` de las plantas aforadas esté lista para corte.
+    Se pondera por la confianza del aforamiento y se descuenta la merma esperada entre
+    el aforamiento y el corte.
+
+        volumen = num_plantas * (1 / ciclo_racimo_semanas) * calidad_confianza * (1 - factor_perdida)
+
+    Lanza ValueError si algún parámetro de entrada es inválido (no hay aforamiento
+    negativo, ciclo cero, ni confianza fuera de [0, 1]).
+    """
+    if aforamiento.num_plantas < 0:
+        raise ValueError("num_plantas no puede ser negativo")
+    if not 0.0 <= aforamiento.calidad_confianza <= 1.0:
+        raise ValueError("calidad_confianza debe estar en [0, 1]")
+    if ciclo_racimo_semanas <= 0:
+        raise ValueError("ciclo_racimo_semanas debe ser positivo")
+    if not 0.0 <= factor_perdida <= 1.0:
+        raise ValueError("factor_perdida debe estar en [0, 1]")
+
+    tasa_semanal = 1 / ciclo_racimo_semanas
+    volumen = (
+        aforamiento.num_plantas
+        * tasa_semanal
+        * aforamiento.calidad_confianza
+        * (1 - factor_perdida)
+    )
+    return ProyeccionCosecha(
+        parcela_id=aforamiento.parcela_id,
+        periodo=periodo,
+        volumen_racimos=round(volumen, 1),
+    )

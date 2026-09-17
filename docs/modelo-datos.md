@@ -1,7 +1,9 @@
 # Modelo de datos
 
-> **Estado:** BORRADOR. Revisar con los equipos 1 y 3 antes de implementar (T-02).
-> Responsable: David — frente front y plataforma
+> **Estado:** implementado en `app/models/entidades.py` y `migrations/versions/1c9c07620028_esquema_inicial.py`.
+> El esquema sigue siendo revisable con los equipos 1 y 3 — en particular el tipo y formato de
+> `parcela_id` (ver D-007) — pero ya no es solo diagrama: `alembic upgrade head` lo crea completo.
+> Responsable: David — frente front y plataforma (T-02)
 
 ## Diagrama
 
