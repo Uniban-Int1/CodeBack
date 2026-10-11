@@ -173,6 +173,14 @@ El excedente de insumos es explícito, no queda implícito en déficit cero.
 
 ---
 
+## D-014 · Servicio como frontera de parámetros del dominio
+**Fecha:** octubre de 2026 · **Decidió:** Camilo (backend) · **Estado:** vigente
+
+`version_metodo` se toma de `metodo` de la proyección. `servicio.py` es la única capa que lee
+`parametros()`, manteniendo el core como funciones puras.
+
+---
+
 <!--
 ## D-00X · Título de la decisión
 **Fecha:** · **Decidió:** · **Estado:** vigente | superada por D-00Y
