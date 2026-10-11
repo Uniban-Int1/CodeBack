@@ -155,6 +155,24 @@ disfrazarlo de dato.
 
 ---
 
+## D-012 · Inventario negativo se rechaza con error
+**Fecha:** octubre de 2026 · **Decidió:** Camilo (backend) · **Estado:** vigente
+
+El inventario negativo se rechaza con error, no se asume cero.
+
+**Por qué:** dato inválido del Equipo 3; corregirlo rompe trazabilidad (D-005 y D-008).
+
+---
+
+## D-013 · Excedente de insumos explícito
+**Fecha:** octubre de 2026 · **Decidió:** Camilo (backend) · **Estado:** vigente
+
+El excedente de insumos es explícito, no queda implícito en déficit cero.
+
+**Por qué:** el objetivo de negocio es evitar tanto faltantes como sobrantes (cajas, cartón, bolsas).
+
+---
+
 <!--
 ## D-00X · Título de la decisión
 **Fecha:** · **Decidió:** · **Estado:** vigente | superada por D-00Y
