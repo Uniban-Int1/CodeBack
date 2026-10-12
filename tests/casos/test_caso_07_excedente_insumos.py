@@ -109,3 +109,20 @@ def test_estimacion_rechaza_inventario_negativo():
             coeficientes={"cajas": 0.85},
             inventario={"cajas": -1},
         )
+
+
+def test_estimacion_rechaza_coeficiente_negativo():
+    """Rechaza un coeficiente sintético que no es dato histórico de Unibán.
+
+    sintetico_coeficiente_cajas: -0.1.
+    """
+    with pytest.raises(
+        ValueError,
+        match="coeficiente de 'cajas' no puede ser negativo",
+    ):
+        estimar(
+            volumen_racimos=20,
+            fecha=date(2026, 9, 21),
+            coeficientes={"cajas": -0.1},
+            inventario={"cajas": 0},
+        )
