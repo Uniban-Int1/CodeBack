@@ -120,11 +120,11 @@ Regresión con partición temporal y validación cruzada de series de tiempo. Va
 *Hecho cuando:* hay métricas registradas comparando contra el modelo base **y** contra una línea base ingenua.
 *Nota:* **si no supera a ambos, no se adopta** (D-003). Se conserva el determinista y se documenta por qué. Eso no es un fracaso, es el resultado.
 
-**Estado:** implementación técnica completada: modelo predictivo mínimo, métricas, línea base ingenua, comparación de los tres métodos y evaluación temporal integrada. Las pruebas sintéticas están aprobadas para validar el comportamiento técnico; no representan datos reales ni validan superioridad agronómica.
+**Estado:** implementación de la evaluación temporal y comparación entre el modelo predictivo, el determinista y la línea base ingenua probada con datos sintéticos. Las métricas comparativas se calculan y devuelven en resultados en memoria; actualmente no se encontró almacenamiento durable de estas métricas. El repositorio no especifica qué mecanismo durable, si alguno, debe utilizarse para satisfacer la expresión «métricas registradas»; esto no establece un requisito nuevo de persistencia. Los resultados sintéticos validan el comportamiento técnico, pero no demuestran que el modelo predictivo supere a ambos métodos de referencia.
 
-**Pendiente:** la validación comparativa con datos reales y la decisión de adopción. No se declara T-14 completamente validada ni se afirma superioridad: D-003 condiciona la adopción a que el modelo supere, en una evaluación temporal válida, tanto al método determinista como a la línea base ingenua.
+**Pendiente:** no se ha realizado una evaluación con datos históricos reales autorizados de Unibán porque no se dispone de ellos. La validación real y la decisión de adopción continúan pendientes de aplicar D-003 con datos reales, mediante una evaluación temporal sin fuga de información y con predicciones deterministas reconstruidas para cada corte temporal. Hasta contar con esa evidencia, no se afirma que el modelo predictivo supere a ambos métodos ni que reemplace al determinista; T-14 no se declara completamente cerrada.
 
-**Dependencia externa:** confirmar y proporcionar el histórico real de cosecha y los datos necesarios para reconstruir las predicciones deterministas por corte temporal. El histórico de cosecha real de Unibán continúa sin estar confirmado; no se presupone una fuente ni un compromiso de entrega.
+**Dependencia externa:** proporcionar acceso autorizado al histórico real de cosecha de Unibán y a los datos necesarios para reconstruir las predicciones deterministas por corte temporal. No se presupone una fuente ni un compromiso de entrega.
 
 ---
 
