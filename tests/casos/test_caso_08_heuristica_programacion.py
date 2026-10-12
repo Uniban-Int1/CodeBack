@@ -328,3 +328,21 @@ def test_uso_capacidad_usa_solo_carga_asignada_y_maneja_sin_vehiculos():
     assert PlanRecoleccion(periodo="2026-W42").uso_capacidad(
         [Vehiculo("V1", 0)]
     ) == 0.0
+
+
+def test_cumplimiento_ventana_calcula_proporcion_y_maneja_plan_vacio():
+    """Métrica de cumplimiento con valores sintéticos, no históricos de Unibán.
+
+    sintetico_items: un ítem válido y otro no válido.
+    """
+    plan_sintetico = PlanRecoleccion(
+        periodo="2026-W42",
+        items=[
+            ItemPlan("P-001", datetime(2026, 10, 16, 14), "V1", 1, 60, True),
+            ItemPlan("P-002", datetime(2026, 10, 16, 14), None, 2, 40, False),
+        ],
+    )
+    plan_vacio_sintetico = PlanRecoleccion(periodo="2026-W42")
+
+    assert plan_sintetico.cumplimiento_ventana == 0.5
+    assert plan_vacio_sintetico.cumplimiento_ventana == 0.0
