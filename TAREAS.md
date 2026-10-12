@@ -137,13 +137,16 @@ Medir cumplimiento de ventana, uso de capacidad y error de estimación de insumo
 metodología aprobada en D-015.
 
 **Estado:** cumplimiento de ventana y uso de capacidad están implementados y probados con datos
-sintéticos. La implementación y las pruebas sintéticas del error absoluto de estimación de
-insumos siguen pendientes. Las pruebas sintéticas demostrarán el comportamiento técnico, no el
-desempeño con datos reales.
+sintéticos. La métrica de error absoluto de estimación de insumos conforme a D-015 está implementada
+y cuenta con pruebas sintéticas de coincidencias exactas, consumo cero, consumo ausente, claves
+incompletas, periodos inválidos, duplicados y unidades incompatibles. Estas pruebas verifican el
+comportamiento técnico; no equivalen a una validación con datos reales de Unibán.
 
-**Pendiente:** validar posteriormente con datos reales autorizados de Unibán, una vez
-confirmadas unidades, claves, cobertura y correspondencia temporal. T-18 no se declara
-completada.
+**Pendiente:** la validación con datos reales autorizados de Unibán sigue bloqueada porque las
+unidades físicas no están confirmadas por insumo, la correspondencia temporal entre la fecha del
+requerimiento y el periodo del consumo observado está por definir, y no se ha identificado una
+fuente integrada que garantice las claves necesarias para el emparejamiento conforme a D-015.
+Resolver estos bloqueos y validar con datos reales autorizados antes de completar T-18.
 
 ---
 
