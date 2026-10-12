@@ -3,10 +3,10 @@ from datetime import datetime
 
 import pytest
 
-from app.core.programacion import heuristica
 from app.core.programacion.fechas import VentanaDespacho
 from app.core.programacion.heuristica import (
     VERSION_METODO,
+    ItemPlan,
     ParcelaAProgramar,
     PlanRecoleccion,
     programar,
@@ -17,18 +17,6 @@ from app.core.programacion.restricciones import (
     cabe_en_vehiculo,
     viajes_necesarios,
 )
-
-
-@pytest.fixture
-def parametros_programacion(monkeypatch):
-    monkeypatch.setattr(
-        heuristica,
-        "parametros",
-        lambda: {
-            "empaque": {"minutos_por_parcela": 120},
-            "planificacion": {"margen_seguridad_min": 30},
-        },
-    )
 
 
 def ventana_normal() -> VentanaDespacho:
@@ -49,12 +37,14 @@ def parcela(
     )
 
 
-def test_programar_asigna_una_parcela_y_conserva_el_metodo(parametros_programacion):
+def test_programar_asigna_una_parcela_y_conserva_el_metodo():
     resultado = programar(
         [parcela("P-001", 60)],
         [Vehiculo("V1", 100)],
         ventana_normal(),
         "2026-W42",
+        minutos_empaque=120,
+        margen_seguridad_min=30,
     )
 
     assert resultado.periodo == "2026-W42"
@@ -68,9 +58,7 @@ def test_programar_asigna_una_parcela_y_conserva_el_metodo(parametros_programaci
     assert item.motivo is None
 
 
-def test_programar_prioriza_fecha_limite_y_desempata_por_parcela_id(
-    parametros_programacion,
-):
+def test_programar_prioriza_fecha_limite_y_desempata_por_parcela_id():
     resultado = programar(
         [
             parcela("P-003", 10, 120),
@@ -80,6 +68,8 @@ def test_programar_prioriza_fecha_limite_y_desempata_por_parcela_id(
         [Vehiculo("V1", 100)],
         ventana_normal(),
         "2026-W42",
+        minutos_empaque=120,
+        margen_seguridad_min=30,
     )
 
     assert [item.parcela_id for item in resultado.items] == [
@@ -95,9 +85,7 @@ def test_programar_prioriza_fecha_limite_y_desempata_por_parcela_id(
     ]
 
 
-def test_programar_acumula_carga_y_asigna_vehiculos_sin_exceder_capacidad(
-    parametros_programacion,
-):
+def test_programar_acumula_carga_y_asigna_vehiculos_sin_exceder_capacidad():
     resultado = programar(
         [
             parcela("P-001", 50, 120),
@@ -107,6 +95,8 @@ def test_programar_acumula_carga_y_asigna_vehiculos_sin_exceder_capacidad(
         [Vehiculo("V2", 60), Vehiculo("V1", 100)],
         ventana_normal(),
         "2026-W42",
+        minutos_empaque=120,
+        margen_seguridad_min=30,
     )
 
     asignaciones = {item.parcela_id: item.vehiculo_id for item in resultado.items}
@@ -127,14 +117,14 @@ def test_programar_acumula_carga_y_asigna_vehiculos_sin_exceder_capacidad(
     assert all(cargas[v.id] <= v.capacidad_racimos for v in [Vehiculo("V1", 100), Vehiculo("V2", 60)])
 
 
-def test_programar_marca_no_programada_la_parcela_que_no_cabe_en_ningun_vehiculo(
-    parametros_programacion,
-):
+def test_programar_marca_no_programada_la_parcela_que_no_cabe_en_ningun_vehiculo():
     resultado = programar(
         [parcela("P-001", 70)],
         [Vehiculo("V1", 50), Vehiculo("V2", 40)],
         ventana_normal(),
         "2026-W42",
+        minutos_empaque=120,
+        margen_seguridad_min=30,
     )
 
     item = resultado.items[0]
@@ -144,9 +134,7 @@ def test_programar_marca_no_programada_la_parcela_que_no_cabe_en_ningun_vehiculo
     assert item.carga_estimada_racimos == 70
 
 
-def test_programar_marca_ventana_fisicamente_inalcanzable_como_no_cumplida(
-    parametros_programacion,
-):
+def test_programar_marca_ventana_fisicamente_inalcanzable_como_no_cumplida():
     ventana = VentanaDespacho(
         inicio=datetime(2026, 10, 16, 6, 0),
         fin=datetime(2026, 10, 16, 8, 0),
@@ -156,6 +144,8 @@ def test_programar_marca_ventana_fisicamente_inalcanzable_como_no_cumplida(
         [Vehiculo("V1", 100)],
         ventana,
         "2026-W42",
+        minutos_empaque=120,
+        margen_seguridad_min=30,
     )
 
     item = resultado.items[0]
@@ -164,9 +154,7 @@ def test_programar_marca_ventana_fisicamente_inalcanzable_como_no_cumplida(
     assert "no caben" in (item.motivo or "").lower()
 
 
-def test_programar_no_debe_presentar_como_exitosa_una_fecha_limite_vencida(
-    parametros_programacion,
-):
+def test_programar_no_debe_presentar_como_exitosa_una_fecha_limite_vencida():
     ventana_vencida = VentanaDespacho(
         inicio=datetime(2000, 1, 1, 6, 0),
         fin=datetime(2000, 1, 1, 18, 0),
@@ -177,6 +165,8 @@ def test_programar_no_debe_presentar_como_exitosa_una_fecha_limite_vencida(
         [Vehiculo("V1", 100)],
         ventana_vencida,
         "2000-W01",
+        minutos_empaque=120,
+        margen_seguridad_min=30,
     )
 
     item = resultado.items[0]
@@ -221,8 +211,8 @@ def test_uso_capacidad_usa_solo_carga_asignada_y_maneja_sin_vehiculos():
     plan = PlanRecoleccion(
         periodo="2026-W42",
         items=[
-            heuristica.ItemPlan("P-001", datetime(2026, 10, 16, 14), "V1", 1, 60, True),
-            heuristica.ItemPlan("P-002", datetime(2026, 10, 16, 14), None, 2, 40, False),
+            ItemPlan("P-001", datetime(2026, 10, 16, 14), "V1", 1, 60, True),
+            ItemPlan("P-002", datetime(2026, 10, 16, 14), None, 2, 40, False),
         ],
     )
 

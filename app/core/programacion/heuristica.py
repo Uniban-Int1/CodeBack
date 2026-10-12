@@ -17,7 +17,6 @@ Responsable: Lizbeth — frente backend (T-10)
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from app.config import parametros
 from app.core.programacion.fechas import VentanaInalcanzable, fecha_limite_corte
 from app.core.programacion.restricciones import Vehiculo, cabe_en_vehiculo
 
@@ -74,12 +73,11 @@ def programar(
     vehiculos: list[Vehiculo],
     ventana,                      # VentanaDespacho
     periodo: str,
+    *,
+    minutos_empaque: int,
+    margen_seguridad_min: int,
 ) -> PlanRecoleccion:
     """Genera el plan de recolección y transporte del periodo."""
-    params = parametros()
-    minutos_empaque = int(params["empaque"]["minutos_por_parcela"])
-    margen_seguridad_min = int(params["planificacion"]["margen_seguridad_min"])
-
     cargas_por_vehiculo = {vehiculo.id: 0 for vehiculo in vehiculos}
     parcelas_ordenadas: list[tuple[datetime, ParcelaAProgramar]] = []
 
