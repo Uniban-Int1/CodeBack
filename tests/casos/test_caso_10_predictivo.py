@@ -2,10 +2,13 @@
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.linear_model import LinearRegression as SklearnLinearRegression
 
+import app.core.proyeccion.predictivo as predictivo
 from app.core.proyeccion.predictivo import (
     ModeloEntrenado,
     entrenar,
+    evaluar_temporal,
     particiones_temporales,
     predecir,
 )
@@ -59,6 +62,31 @@ def observaciones_temporales_sinteticas():
     observaciones = pd.DataFrame(filas)
     observaciones.index = [indice // 2 for indice in range(len(observaciones))]
     return observaciones
+
+
+@pytest.fixture
+def cosechas_temporales_sinteticas():
+    periodos = (
+        "2026-W01",
+        "2026-W02",
+        "2026-W03",
+        "2026-W04",
+        "2026-W05",
+        "2026-W06",
+        "2026-W07",
+        "2026-W08",
+    )
+    filas = [
+        {
+            "parcela_id": parcela_id,
+            "periodo": periodo,
+            "caracteristica_sintetica": float(valor),
+            "objetivo_sintetico": float(3 * valor + 2),
+        }
+        for periodo in reversed(periodos)
+        for parcela_id, valor in (("P-001", 1), ("P-002", 2))
+    ]
+    return pd.DataFrame(filas, index=[100 + 3 * i for i in range(len(filas))])
 
 
 def test_entrenar_crea_modelo_y_conserva_caracteristicas_en_orden_sintetico(
@@ -593,3 +621,282 @@ def test_particiones_temporales_conserva_posiciones_con_indice_desordenado():
     assert filas_validacion == ["fila-2"]
     assert particiones.folds[1].indices_entrenamiento == (1, 4, 5, 2)
     assert particiones.folds[1].indices_validacion == (0, 3)
+
+
+def test_evaluar_temporal_mide_folds_y_holdout_por_separado_sintetico(
+    cosechas_temporales_sinteticas,
+):
+    resultado = evaluar_temporal(
+        cosechas_temporales_sinteticas,
+        columna_periodo="periodo",
+        columnas_predictoras=("caracteristica_sintetica",),
+        columna_objetivo="objetivo_sintetico",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    assert len(resultado.folds) == 2
+    assert resultado.folds[0].periodos_entrenamiento == ("2026-W01", "2026-W02")
+    assert resultado.folds[0].periodos_evaluacion == ("2026-W03", "2026-W04")
+    assert resultado.folds[0].n_observaciones == 4
+    assert resultado.folds[0].mae == pytest.approx(0.0)
+    assert resultado.folds[1].periodos_entrenamiento == (
+        "2026-W01",
+        "2026-W02",
+        "2026-W03",
+        "2026-W04",
+    )
+    assert resultado.folds[1].periodos_evaluacion == ("2026-W05", "2026-W06")
+    assert resultado.folds[1].n_observaciones == 4
+    assert resultado.folds[1].mae == pytest.approx(0.0)
+    assert resultado.holdout.periodos_entrenamiento == (
+        "2026-W01",
+        "2026-W02",
+        "2026-W03",
+        "2026-W04",
+        "2026-W05",
+        "2026-W06",
+    )
+    assert resultado.holdout.periodos_evaluacion == ("2026-W07", "2026-W08")
+    assert resultado.holdout.n_observaciones == 4
+    assert resultado.holdout.mae == pytest.approx(0.0)
+
+
+def test_evaluar_temporal_no_entrena_con_holdout_sintetico(
+    cosechas_temporales_sinteticas,
+):
+    datos_sinteticos = cosechas_temporales_sinteticas.copy()
+    mascara_holdout = datos_sinteticos["periodo"].isin(("2026-W07", "2026-W08"))
+    datos_sinteticos.loc[mascara_holdout, "objetivo_sintetico"] += 10.0
+
+    resultado = evaluar_temporal(
+        datos_sinteticos,
+        columna_periodo="periodo",
+        columnas_predictoras=("caracteristica_sintetica",),
+        columna_objetivo="objetivo_sintetico",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    assert resultado.holdout.periodos_entrenamiento == (
+        "2026-W01",
+        "2026-W02",
+        "2026-W03",
+        "2026-W04",
+        "2026-W05",
+        "2026-W06",
+    )
+    assert set(resultado.holdout.periodos_entrenamiento).isdisjoint(
+        resultado.holdout.periodos_evaluacion
+    )
+    assert resultado.holdout.mae == pytest.approx(10.0)
+    assert all(
+        max(fold.periodos_entrenamiento) < min(fold.periodos_evaluacion)
+        for fold in resultado.folds
+    )
+
+
+@pytest.mark.parametrize(
+    ("columna_periodo", "columna_objetivo"),
+    [
+        ("periodo_ausente", "objetivo_sintetico"),
+        ("periodo", "objetivo_ausente"),
+    ],
+)
+def test_evaluar_temporal_rechaza_columnas_requeridas_ausentes(
+    cosechas_temporales_sinteticas, columna_periodo, columna_objetivo
+):
+    with pytest.raises(ValueError, match="Falta"):
+        evaluar_temporal(
+            cosechas_temporales_sinteticas,
+            columna_periodo=columna_periodo,
+            columnas_predictoras=("caracteristica_sintetica",),
+            columna_objetivo=columna_objetivo,
+            num_folds=2,
+            num_periodos_holdout=2,
+        )
+
+
+def test_evaluar_temporal_rechaza_caracteristica_invalida_en_evaluacion(
+    cosechas_temporales_sinteticas,
+):
+    datos_sinteticos = cosechas_temporales_sinteticas.copy()
+    datos_sinteticos.loc[
+        datos_sinteticos["periodo"] == "2026-W08",
+        "caracteristica_sintetica",
+    ] = np.nan
+
+    with pytest.raises(ValueError, match="no puede contener valores nulos"):
+        evaluar_temporal(
+            datos_sinteticos,
+            columna_periodo="periodo",
+            columnas_predictoras=("caracteristica_sintetica",),
+            columna_objetivo="objetivo_sintetico",
+            num_folds=2,
+            num_periodos_holdout=2,
+        )
+
+
+def test_evaluar_temporal_rechaza_objetivo_invalido_en_holdout(
+    cosechas_temporales_sinteticas,
+):
+    datos_sinteticos = cosechas_temporales_sinteticas.copy()
+    datos_sinteticos.loc[
+        datos_sinteticos["periodo"] == "2026-W08",
+        "objetivo_sintetico",
+    ] = np.nan
+
+    with pytest.raises(ValueError, match="solo números finitos"):
+        evaluar_temporal(
+            datos_sinteticos,
+            columna_periodo="periodo",
+            columnas_predictoras=("caracteristica_sintetica",),
+            columna_objetivo="objetivo_sintetico",
+            num_folds=2,
+            num_periodos_holdout=2,
+        )
+
+
+def test_evaluar_temporal_rechaza_configuracion_insuficiente(
+    cosechas_temporales_sinteticas,
+):
+    with pytest.raises(ValueError, match="periodos insuficientes"):
+        evaluar_temporal(
+            cosechas_temporales_sinteticas,
+            columna_periodo="periodo",
+            columnas_predictoras=("caracteristica_sintetica",),
+            columna_objetivo="objetivo_sintetico",
+            num_folds=6,
+            num_periodos_holdout=2,
+        )
+
+
+def test_evaluar_temporal_entrena_con_las_filas_exactas_de_cada_particion(
+    cosechas_temporales_sinteticas, monkeypatch
+):
+    datos_sinteticos = cosechas_temporales_sinteticas
+    particiones = particiones_temporales(
+        datos_sinteticos,
+        columna_periodo="periodo",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    entrenar_real = predictivo.entrenar
+    datos_recibidos = []
+
+    def espiar_entrenar(observaciones, **kwargs):
+        datos_recibidos.append(observaciones.copy(deep=True))
+        return entrenar_real(observaciones, **kwargs)
+
+    monkeypatch.setattr(predictivo, "entrenar", espiar_entrenar)
+    evaluar_temporal(
+        datos_sinteticos,
+        columna_periodo="periodo",
+        columnas_predictoras=("caracteristica_sintetica",),
+        columna_objetivo="objetivo_sintetico",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    assert len(datos_recibidos) == len(particiones.folds) + 1
+    for recibido, fold in zip(datos_recibidos, particiones.folds):
+        esperado = datos_sinteticos.iloc[list(fold.indices_entrenamiento)]
+        pd.testing.assert_frame_equal(recibido, esperado)
+        periodos_no_entrenables = set(fold.periodos_validacion) | set(
+            particiones.periodos_holdout
+        )
+        assert set(recibido["periodo"]).isdisjoint(periodos_no_entrenables)
+
+    posiciones_holdout = set(particiones.indices_holdout)
+    indices_historial = [
+        posicion
+        for posicion in range(len(datos_sinteticos))
+        if posicion not in posiciones_holdout
+    ]
+    esperado_holdout = datos_sinteticos.iloc[indices_historial]
+    pd.testing.assert_frame_equal(datos_recibidos[-1], esperado_holdout)
+    assert set(datos_recibidos[-1]["periodo"]).isdisjoint(
+        particiones.periodos_holdout
+    )
+
+
+def test_evaluar_temporal_entrena_estimadores_independientes_por_fold_y_holdout(
+    cosechas_temporales_sinteticas, monkeypatch
+):
+    estimadores_creados = []
+
+    def crear_estimador():
+        estimador = SklearnLinearRegression()
+        estimadores_creados.append(estimador)
+        return estimador
+
+    monkeypatch.setattr(predictivo, "LinearRegression", crear_estimador)
+    resultado = evaluar_temporal(
+        cosechas_temporales_sinteticas,
+        columna_periodo="periodo",
+        columnas_predictoras=("caracteristica_sintetica",),
+        columna_objetivo="objetivo_sintetico",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    assert len(estimadores_creados) == len(resultado.folds) + 1
+    assert len({id(estimador) for estimador in estimadores_creados}) == len(
+        estimadores_creados
+    )
+
+
+def test_evaluar_temporal_no_incluye_objetivos_del_fold_validado_en_entrenamiento(
+    cosechas_temporales_sinteticas, monkeypatch
+):
+    datos_originales = cosechas_temporales_sinteticas
+    particiones = particiones_temporales(
+        datos_originales,
+        columna_periodo="periodo",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    fold_validado = particiones.folds[0]
+    datos_modificados = datos_originales.copy(deep=True)
+    datos_modificados.iloc[
+        list(fold_validado.indices_validacion),
+        datos_modificados.columns.get_loc("objetivo_sintetico"),
+    ] += 1000.0
+
+    entrenar_real = predictivo.entrenar
+    datos_recibidos = []
+
+    def espiar_entrenar(observaciones, **kwargs):
+        datos_recibidos.append(observaciones.copy(deep=True))
+        return entrenar_real(observaciones, **kwargs)
+
+    monkeypatch.setattr(predictivo, "entrenar", espiar_entrenar)
+    evaluar_temporal(
+        datos_originales,
+        columna_periodo="periodo",
+        columnas_predictoras=("caracteristica_sintetica",),
+        columna_objetivo="objetivo_sintetico",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    evaluar_temporal(
+        datos_modificados,
+        columna_periodo="periodo",
+        columnas_predictoras=("caracteristica_sintetica",),
+        columna_objetivo="objetivo_sintetico",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    datos_entrenamiento_fold_original = datos_recibidos[0]
+    datos_entrenamiento_fold_modificado = datos_recibidos[len(particiones.folds) + 1]
+    pd.testing.assert_frame_equal(
+        datos_entrenamiento_fold_original,
+        datos_entrenamiento_fold_modificado,
+    )
+    assert set(datos_entrenamiento_fold_original["periodo"]).isdisjoint(
+        fold_validado.periodos_validacion
+    )
+    assert set(datos_entrenamiento_fold_modificado["periodo"]).isdisjoint(
+        fold_validado.periodos_validacion
+    )

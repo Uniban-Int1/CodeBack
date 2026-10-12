@@ -20,6 +20,8 @@ from pandas.api.types import is_bool_dtype, is_numeric_dtype
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import TimeSeriesSplit
 
+from app.core.proyeccion.metricas import mae
+
 METODO = "predictivo-v1"
 
 
@@ -43,6 +45,29 @@ class ParticionesTemporales:
     folds: tuple[FoldTemporal, ...]
     indices_holdout: tuple[int, ...]
     periodos_holdout: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ResultadoFoldEvaluacion:
+    numero_fold: int
+    periodos_entrenamiento: tuple[str, ...]
+    periodos_evaluacion: tuple[str, ...]
+    n_observaciones: int
+    mae: float
+
+
+@dataclass(frozen=True)
+class ResultadoHoldoutEvaluacion:
+    periodos_entrenamiento: tuple[str, ...]
+    periodos_evaluacion: tuple[str, ...]
+    n_observaciones: int
+    mae: float
+
+
+@dataclass(frozen=True)
+class ResultadoEvaluacionTemporal:
+    folds: tuple[ResultadoFoldEvaluacion, ...]
+    holdout: ResultadoHoldoutEvaluacion
 
 
 def _validar_dataframe(data: pd.DataFrame) -> None:
@@ -194,6 +219,118 @@ def particiones_temporales(
         folds=tuple(folds),
         indices_holdout=indices_holdout,
         periodos_holdout=periodos_holdout,
+    )
+
+
+def evaluar_temporal(
+    observaciones: pd.DataFrame,
+    *,
+    columna_periodo: str,
+    columnas_predictoras: Sequence[str],
+    columna_objetivo: str,
+    num_folds: int,
+    num_periodos_holdout: int,
+) -> ResultadoEvaluacionTemporal:
+    """Entrena y evalúa folds expansivos y un holdout final por separado.
+
+    Devuelve métricas técnicas para cada partición. No compara con otros
+    métodos ni constituye validación agronómica de datos sintéticos.
+    """
+    if not isinstance(observaciones, pd.DataFrame):
+        raise TypeError("observaciones debe ser un pandas.DataFrame")
+    if isinstance(columnas_predictoras, str) or not isinstance(
+        columnas_predictoras, Sequence
+    ):
+        raise TypeError("columnas_predictoras debe ser una secuencia de nombres")
+    if not columnas_predictoras or any(
+        not isinstance(columna, str) or not columna.strip()
+        for columna in columnas_predictoras
+    ):
+        raise ValueError("columnas_predictoras debe contener nombres no vacíos")
+    if len(set(columnas_predictoras)) != len(columnas_predictoras):
+        raise ValueError("columnas_predictoras no puede contener nombres duplicados")
+    if not isinstance(columna_objetivo, str) or not columna_objetivo.strip():
+        raise ValueError("columna_objetivo debe ser un nombre no vacío")
+    if columna_objetivo in columnas_predictoras:
+        raise ValueError("la columna objetivo no puede ser una característica")
+
+    columnas_requeridas = (*columnas_predictoras, columna_objetivo)
+    faltantes = [columna for columna in columnas_requeridas if columna not in observaciones]
+    if faltantes:
+        raise ValueError(f"Faltan columnas requeridas: {', '.join(faltantes)}")
+
+    particiones = particiones_temporales(
+        observaciones,
+        columna_periodo=columna_periodo,
+        num_folds=num_folds,
+        num_periodos_holdout=num_periodos_holdout,
+    )
+
+    resultados_folds: list[ResultadoFoldEvaluacion] = []
+    for numero_fold, fold in enumerate(particiones.folds, start=1):
+        datos_entrenamiento = observaciones.iloc[
+            list(fold.indices_entrenamiento)
+        ]
+        datos_evaluacion = observaciones.iloc[list(fold.indices_validacion)]
+        modelo = entrenar(
+            datos_entrenamiento,
+            columnas_predictoras=columnas_predictoras,
+            columna_objetivo=columna_objetivo,
+        )
+        predicciones = predecir(
+            modelo,
+            datos_evaluacion.loc[:, list(columnas_predictoras)],
+        )
+        resultados_folds.append(
+            ResultadoFoldEvaluacion(
+                numero_fold=numero_fold,
+                periodos_entrenamiento=fold.periodos_entrenamiento,
+                periodos_evaluacion=fold.periodos_validacion,
+                n_observaciones=len(datos_evaluacion),
+                mae=mae(
+                    datos_evaluacion[columna_objetivo].tolist(),
+                    predicciones.tolist(),
+                ),
+            )
+        )
+
+    indices_holdout = set(particiones.indices_holdout)
+    indices_entrenamiento_holdout = tuple(
+        posicion
+        for posicion in range(len(observaciones))
+        if posicion not in indices_holdout
+    )
+    datos_entrenamiento_holdout = observaciones.iloc[
+        list(indices_entrenamiento_holdout)
+    ]
+    datos_holdout = observaciones.iloc[list(particiones.indices_holdout)]
+    modelo_holdout = entrenar(
+        datos_entrenamiento_holdout,
+        columnas_predictoras=columnas_predictoras,
+        columna_objetivo=columna_objetivo,
+    )
+    predicciones_holdout = predecir(
+        modelo_holdout,
+        datos_holdout.loc[:, list(columnas_predictoras)],
+    )
+    periodos_entrenamiento_holdout = tuple(
+        sorted(
+            set(observaciones[columna_periodo]) - set(particiones.periodos_holdout),
+            key=_fecha_inicio_semana_iso,
+        )
+    )
+    resultado_holdout = ResultadoHoldoutEvaluacion(
+        periodos_entrenamiento=periodos_entrenamiento_holdout,
+        periodos_evaluacion=particiones.periodos_holdout,
+        n_observaciones=len(datos_holdout),
+        mae=mae(
+            datos_holdout[columna_objetivo].tolist(),
+            predicciones_holdout.tolist(),
+        ),
+    )
+    return ResultadoEvaluacionTemporal(
+        folds=tuple(resultados_folds),
+        holdout=resultado_holdout,
     )
 
 
