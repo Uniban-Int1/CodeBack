@@ -120,6 +120,12 @@ Regresión con partición temporal y validación cruzada de series de tiempo. Va
 *Hecho cuando:* hay métricas registradas comparando contra el modelo base **y** contra una línea base ingenua.
 *Nota:* **si no supera a ambos, no se adopta** (D-003). Se conserva el determinista y se documenta por qué. Eso no es un fracaso, es el resultado.
 
+**Estado:** implementación técnica completada: modelo predictivo mínimo, métricas, línea base ingenua, comparación de los tres métodos y evaluación temporal integrada. Las pruebas sintéticas están aprobadas para validar el comportamiento técnico; no representan datos reales ni validan superioridad agronómica.
+
+**Pendiente:** la validación comparativa con datos reales y la decisión de adopción. No se declara T-14 completamente validada ni se afirma superioridad: D-003 condiciona la adopción a que el modelo supere, en una evaluación temporal válida, tanto al método determinista como a la línea base ingenua.
+
+**Dependencia externa:** confirmar y proporcionar el histórico real de cosecha y los datos necesarios para reconstruir las predicciones deterministas por corte temporal. El histórico de cosecha real de Unibán continúa sin estar confirmado; no se presupone una fuente ni un compromiso de entrega.
+
 ---
 
 ## Semana 13–16 · Evaluación
