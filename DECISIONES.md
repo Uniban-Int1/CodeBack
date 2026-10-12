@@ -183,6 +183,62 @@ El excedente de insumos es explícito, no queda implícito en déficit cero.
 
 ---
 
+## D-015 · Propuesta metodológica para evaluar el error de estimación de insumos
+**Fecha:** pendiente de aprobación · **Decidió:** pendiente de aprobación · **Estado:** propuesta pendiente de aprobación
+
+**Objetivo:** definir cómo evaluar la diferencia entre la cantidad requerida estimada por el
+sistema y el consumo observado, para aportar evidencia a T-18.
+
+**Emparejamiento candidato:** relacionar cada observación por insumo, parcela y periodo. Antes
+de calcular una métrica, se debe confirmar que esas claves están disponibles y que la fecha
+asociada al requerimiento representa el mismo intervalo que el periodo del consumo observado.
+No se debe emparejar por aproximación temporal sin una regla acordada.
+
+**Unidades:** solo se compararán cantidades cuando se haya confirmado que la estimación y el
+consumo observado usan unidades compatibles para el mismo insumo. Si las unidades no están
+confirmadas o no coinciden, la observación se identifica separadamente como no comparable.
+
+**Métrica candidata:** considerar como alternativa inicial el error absoluto:
+`|cantidad_requerida_estimada - consumo_observado|`. Esta fórmula no queda aprobada por esta
+propuesta. El error absoluto se expresa en la unidad del insumo y no distingue por sí solo entre
+sobreestimación y subestimación.
+
+El error absoluto porcentual es otra alternativa, pero no está definido cuando el consumo
+observado es cero y puede resultar muy grande cuando el valor observado es pequeño. Su uso
+requeriría acordar expresamente el tratamiento de esos casos.
+
+**Datos ausentes y observaciones no comparables:** un consumo observado igual a cero es un valor
+observado, no un dato ausente; podrá incluirse si se aprueba una métrica aplicable y las demás
+condiciones de comparación se cumplen. Un consumo ausente no se reemplaza por cero y se informa
+separadamente como no evaluable. Las observaciones con claves incompletas, periodos no
+emparejables o unidades incompatibles también se identifican por separado, sin clasificarlas
+como consumos ausentes.
+
+**Presentación y agregación:** conservar los resultados por insumo, parcela y periodo cuando las
+claves y unidades permitan compararlos. No sumar errores de insumos con unidades físicas
+diferentes. La selección de un resumen agregado, su método y ponderación quedan pendientes de
+acuerdo; hasta entonces, presentar los resultados separados por insumo y reportar por separado
+las observaciones evaluables, no evaluables por consumo ausente y no comparables.
+
+**Validación:** las pruebas sintéticas verificarán la implementación de la metodología que se
+apruebe, con resultados calculables manualmente y datos identificados explícitamente como
+sintéticos. No constituyen validación de desempeño con datos reales. La validación posterior
+requiere datos reales autorizados de Unibán y la verificación de unidades, claves y
+correspondencia temporal.
+
+**Impacto previsto:** la implementación se realizará después de aprobar la metodología. Se
+reutilizará el contexto existente para relacionar cada requerimiento con insumo, parcela y
+periodo; el modelo persistido solo se modificará si se demuestra que esas relaciones no pueden
+recuperarse de forma fiable del contexto existente.
+
+**Por qué:** T-18 solicita medir el error de estimación de insumos, pero no fija fórmula,
+unidades compatibles, claves temporales, tratamiento de ausencias ni agregación. El contrato
+describe `consumos[]` como opcional y destinado a validación, mientras que las unidades y la
+cobertura de esos datos siguen pendientes de confirmación. Esta propuesta explicita los puntos
+por resolver sin presentar una fórmula como aprobada.
+
+---
+
 <!--
 ## D-00X · Título de la decisión
 **Fecha:** · **Decidió:** · **Estado:** vigente | superada por D-00Y
