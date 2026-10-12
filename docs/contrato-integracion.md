@@ -51,7 +51,7 @@ Alternativa aceptada: archivo CSV versionado con las mismas columnas.
 | `capacidad_medio_racimos` | int | sí | racimos por viaje del medio |
 | `vehiculos[]` | array | sí | disponibles en el periodo, con capacidad |
 | `ventana_despacho` | object | sí | inicio y fin |
-| `inventario[]` | array | sí | por insumo y parcela |
+| `inventario[]` | array | sí | por insumo y parcela. Unidad física, periodo/fecha de corte, frecuencia de actualización y diferencia entre saldo cero y dato ausente pendientes de confirmar con el Equipo 3; ver D-008 y `docs/inventario-variables.md`. |
 | `consumos[]` | array | no | histórico de consumo real, para validar |
 
 ```json
@@ -67,6 +67,11 @@ Alternativa aceptada: archivo CSV versionado con las mismas columnas.
   "consumos": [{"insumo": "cajas", "periodo": "2026-W37", "cantidad": 412}]
 }
 ```
+
+El ejemplo de `inventario[]` solo ilustra la forma provisional del dato: `cantidad` no
+define una unidad física ni expresa por sí misma el periodo o la actualidad del saldo.
+Esos elementos siguen pendientes de confirmación con el Equipo 3; el ejemplo no constituye
+evidencia de un extracto real de Unibán.
 
 ---
 

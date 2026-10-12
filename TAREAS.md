@@ -45,6 +45,11 @@ Revisar qué trae realmente el histórico de Unibán y qué falta. Documentar lo
 
 *Hecho cuando:* existe una tabla de variables con disponibilidad, tipo y cobertura temporal.
 
+**Estado de evidencia:** la tabla inicial en `docs/inventario-variables.md` registra lo
+propuesto en el contrato y distingue los datos aún no verificados. T-04 permanece pendiente
+hasta contrastar la tabla con un extracto real del histórico de Unibán; la existencia de la
+tabla por sí sola no confirma disponibilidad, unidades ni cobertura temporal reales.
+
 ---
 
 ### T-05 — Levantar parámetros de acarreo y ventanas
