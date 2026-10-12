@@ -133,7 +133,17 @@ Regresión con partición temporal y validación cruzada de series de tiempo. Va
 ### T-18 — Escenario 1: operación normal
 **Lizbeth**
 
-Medir cumplimiento de ventana, uso de capacidad y error de estimación de insumos.
+Medir cumplimiento de ventana, uso de capacidad y error de estimación de insumos conforme a la
+metodología aprobada en D-015.
+
+**Estado:** cumplimiento de ventana y uso de capacidad están implementados y probados con datos
+sintéticos. La implementación y las pruebas sintéticas del error absoluto de estimación de
+insumos siguen pendientes. Las pruebas sintéticas demostrarán el comportamiento técnico, no el
+desempeño con datos reales.
+
+**Pendiente:** validar posteriormente con datos reales autorizados de Unibán, una vez
+confirmadas unidades, claves, cobertura y correspondencia temporal. T-18 no se declara
+completada.
 
 ---
 

@@ -183,59 +183,51 @@ El excedente de insumos es explícito, no queda implícito en déficit cero.
 
 ---
 
-## D-015 · Propuesta metodológica para evaluar el error de estimación de insumos
-**Fecha:** pendiente de aprobación · **Decidió:** pendiente de aprobación · **Estado:** propuesta pendiente de aprobación
+## D-015 · Metodología para evaluar el error de estimación de insumos
+**Fecha:** 12 de octubre de 2026 · **Decidió:** no identificado · **Estado:** vigente
 
-**Objetivo:** definir cómo evaluar la diferencia entre la cantidad requerida estimada por el
-sistema y el consumo observado, para aportar evidencia a T-18.
+**Objetivo:** evaluar el error de estimación de insumos comparando la cantidad requerida
+estimada con el consumo realmente observado, como parte de T-18.
 
-**Emparejamiento candidato:** relacionar cada observación por insumo, parcela y periodo. Antes
-de calcular una métrica, se debe confirmar que esas claves están disponibles y que la fecha
-asociada al requerimiento representa el mismo intervalo que el periodo del consumo observado.
-No se debe emparejar por aproximación temporal sin una regla acordada.
+**Fórmula:** el error absoluto es el valor absoluto de la diferencia entre la cantidad
+requerida estimada y el consumo observado:
+`|cantidad_requerida_estimada - consumo_observado|`.
 
-**Unidades:** solo se compararán cantidades cuando se haya confirmado que la estimación y el
-consumo observado usan unidades compatibles para el mismo insumo. Si las unidades no están
-confirmadas o no coinciden, la observación se identifica separadamente como no comparable.
+**Granularidad y emparejamiento:** la unidad de evaluación es insumo, parcela y periodo. El
+error solo se calcula cuando las claves permiten emparejar los datos inequívocamente, el
+periodo representa el mismo intervalo y las unidades físicas son compatibles. No se permiten
+emparejamientos temporales aproximados sin una regla aprobada.
 
-**Métrica candidata:** considerar como alternativa inicial el error absoluto:
-`|cantidad_requerida_estimada - consumo_observado|`. Esta fórmula no queda aprobada por esta
-propuesta. El error absoluto se expresa en la unidad del insumo y no distingue por sí solo entre
-sobreestimación y subestimación.
+**Unidades:** no se inventan conversiones. Las observaciones cuyas unidades físicas no sean
+compatibles se identifican como no comparables y no se incluyen en el cálculo.
 
-El error absoluto porcentual es otra alternativa, pero no está definido cuando el consumo
-observado es cero y puede resultar muy grande cuando el valor observado es pequeño. Su uso
-requeriría acordar expresamente el tratamiento de esos casos.
+**Datos ausentes y observaciones no comparables:** un consumo observado igual a cero es válido
+y puede evaluarse si las demás condiciones de comparación se cumplen. Un consumo ausente no se
+sustituye por cero y se reporta por separado como no evaluable. Las claves incompletas, los
+periodos no emparejables y las unidades incompatibles se identifican por separado como
+observaciones no comparables.
 
-**Datos ausentes y observaciones no comparables:** un consumo observado igual a cero es un valor
-observado, no un dato ausente; podrá incluirse si se aprueba una métrica aplicable y las demás
-condiciones de comparación se cumplen. Un consumo ausente no se reemplaza por cero y se informa
-separadamente como no evaluable. Las observaciones con claves incompletas, periodos no
-emparejables o unidades incompatibles también se identifican por separado, sin clasificarlas
-como consumos ausentes.
+**Presentación y agregación:** mostrar los resultados por insumo, parcela y periodo cuando sea
+posible evaluarlos. Informar por separado las cantidades evaluables, no evaluables por consumo
+ausente y no comparables. No sumar errores correspondientes a unidades físicas diferentes. No
+se define una agregación estadística general adicional sin una decisión posterior.
 
-**Presentación y agregación:** conservar los resultados por insumo, parcela y periodo cuando las
-claves y unidades permitan compararlos. No sumar errores de insumos con unidades físicas
-diferentes. La selección de un resumen agregado, su método y ponderación quedan pendientes de
-acuerdo; hasta entonces, presentar los resultados separados por insumo y reportar por separado
-las observaciones evaluables, no evaluables por consumo ausente y no comparables.
-
-**Validación:** las pruebas sintéticas verificarán la implementación de la metodología que se
-apruebe, con resultados calculables manualmente y datos identificados explícitamente como
-sintéticos. No constituyen validación de desempeño con datos reales. La validación posterior
-requiere datos reales autorizados de Unibán y la verificación de unidades, claves y
+**Validación:** las pruebas sintéticas verifican el comportamiento técnico con resultados
+calculables manualmente, pero no demuestran desempeño real. La validación con datos reales
+requiere acceso autorizado a datos de Unibán y confirmar unidades, claves, cobertura y
 correspondencia temporal.
 
-**Impacto previsto:** la implementación se realizará después de aprobar la metodología. Se
-reutilizará el contexto existente para relacionar cada requerimiento con insumo, parcela y
-periodo; el modelo persistido solo se modificará si se demuestra que esas relaciones no pueden
-recuperarse de forma fiable del contexto existente.
+**Impacto técnico:** antes de modificar entidades o persistencia, se comprobará si las claves
+necesarias pueden recuperarse de forma fiable del contexto existente. El modelo persistido solo
+se modificará si se demuestra que es necesario.
 
-**Por qué:** T-18 solicita medir el error de estimación de insumos, pero no fija fórmula,
-unidades compatibles, claves temporales, tratamiento de ausencias ni agregación. El contrato
-describe `consumos[]` como opcional y destinado a validación, mientras que las unidades y la
-cobertura de esos datos siguen pendientes de confirmación. Esta propuesta explicita los puntos
-por resolver sin presentar una fórmula como aprobada.
+**Por qué:** el error absoluto conserva la unidad física del insumo y permite evaluar un
+consumo observado igual a cero; no distingue por sí solo entre sobreestimación y subestimación.
+El error absoluto porcentual no está definido cuando el consumo observado es cero y puede
+resultar muy grande cuando el observado es pequeño. T-18 solicita medir el error de estimación;
+D-004 establece que los coeficientes de consumo son configurables y D-013 hace explícito el
+excedente de insumos, pero ninguna define esta métrica. La fórmula aprobada evalúa cantidad
+requerida frente a consumo observado y no reemplaza la medición de déficit o excedente.
 
 ---
 
