@@ -11,7 +11,7 @@ Responsable: Camilo — frente backend (T-14)
 """
 from datetime import date
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -20,7 +20,12 @@ from pandas.api.types import is_bool_dtype, is_numeric_dtype
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import TimeSeriesSplit
 
-from app.core.proyeccion.metricas import mae
+from app.core.proyeccion.metricas import (
+    ResultadoComparacionMetodos,
+    comparar_metodos_disponibles,
+    linea_base_ingenua,
+    mae,
+)
 
 METODO = "predictivo-v1"
 
@@ -68,6 +73,27 @@ class ResultadoHoldoutEvaluacion:
 class ResultadoEvaluacionTemporal:
     folds: tuple[ResultadoFoldEvaluacion, ...]
     holdout: ResultadoHoldoutEvaluacion
+
+
+@dataclass(frozen=True)
+class ResultadoFoldEvaluacionIntegrada:
+    numero_fold: int
+    periodos_entrenamiento: tuple[str, ...]
+    periodos_evaluacion: tuple[str, ...]
+    comparacion: ResultadoComparacionMetodos
+
+
+@dataclass(frozen=True)
+class ResultadoHoldoutEvaluacionIntegrada:
+    periodos_entrenamiento: tuple[str, ...]
+    periodos_evaluacion: tuple[str, ...]
+    comparacion: ResultadoComparacionMetodos
+
+
+@dataclass(frozen=True)
+class ResultadoEvaluacionTemporalIntegrada:
+    folds: tuple[ResultadoFoldEvaluacionIntegrada, ...]
+    holdout: ResultadoHoldoutEvaluacionIntegrada
 
 
 def _validar_dataframe(data: pd.DataFrame) -> None:
@@ -329,6 +355,215 @@ def evaluar_temporal(
         ),
     )
     return ResultadoEvaluacionTemporal(
+        folds=tuple(resultados_folds),
+        holdout=resultado_holdout,
+    )
+
+
+def evaluar_temporal_integrada(
+    observaciones: pd.DataFrame,
+    *,
+    columna_periodo: str,
+    columnas_predictoras: Sequence[str],
+    columna_objetivo: str,
+    predicciones_deterministas: Mapping[str, pd.DataFrame],
+    num_folds: int,
+    num_periodos_holdout: int,
+) -> ResultadoEvaluacionTemporalIntegrada:
+    """Evalúa los tres métodos con origen fijo en cada fold y el holdout.
+
+    `observaciones` debe incluir `parcela_id`, la columna de periodo, las
+    características y la cosecha real objetivo. `predicciones_deterministas`
+    debe tener una tabla por clave `fold_1`, ..., `fold_N` y `holdout`. Cada
+    tabla usa `parcela_id`, `periodo` y `y_pred_base`, y puede omitir claves
+    sin predicción. La cosecha real usada por la línea ingenua se limita a las
+    filas de entrenamiento del bloque, incluso en el holdout.
+    """
+    if not isinstance(predicciones_deterministas, Mapping):
+        raise TypeError("predicciones_deterministas debe ser un mapeo")
+    _validar_dataframe(observaciones)
+    if not isinstance(columna_periodo, str) or not columna_periodo.strip():
+        raise ValueError("columna_periodo debe ser un nombre no vacío")
+    if isinstance(columnas_predictoras, str) or not isinstance(
+        columnas_predictoras, Sequence
+    ):
+        raise TypeError("columnas_predictoras debe ser una secuencia de nombres")
+    if not columnas_predictoras or any(
+        not isinstance(columna, str) or not columna.strip()
+        for columna in columnas_predictoras
+    ):
+        raise ValueError("columnas_predictoras debe contener nombres no vacíos")
+    if len(set(columnas_predictoras)) != len(columnas_predictoras):
+        raise ValueError("columnas_predictoras no puede contener nombres duplicados")
+    if not isinstance(columna_objetivo, str) or not columna_objetivo.strip():
+        raise ValueError("columna_objetivo debe ser un nombre no vacío")
+    if "parcela_id" not in observaciones.columns:
+        raise ValueError("Falta la columna requerida: parcela_id")
+    if columna_periodo == "parcela_id":
+        raise ValueError("la columna de periodo debe ser distinta de parcela_id")
+    if columna_periodo in columnas_predictoras or columna_periodo == columna_objetivo:
+        raise ValueError(
+            "la columna de periodo no puede ser una característica ni el objetivo"
+        )
+    if columna_objetivo in columnas_predictoras:
+        raise ValueError("la columna objetivo no puede ser una característica")
+    if "parcela_id" in columnas_predictoras or "parcela_id" == columna_objetivo:
+        raise ValueError(
+            "parcela_id no puede ser una característica ni el objetivo"
+        )
+
+    particiones = particiones_temporales(
+        observaciones,
+        columna_periodo=columna_periodo,
+        num_folds=num_folds,
+        num_periodos_holdout=num_periodos_holdout,
+    )
+    claves_deterministas_esperadas = {
+        *(f"fold_{numero}" for numero in range(1, len(particiones.folds) + 1)),
+        "holdout",
+    }
+    if set(predicciones_deterministas) != claves_deterministas_esperadas:
+        raise ValueError(
+            "predicciones_deterministas debe contener exactamente las claves: "
+            + ", ".join(sorted(claves_deterministas_esperadas))
+        )
+
+    columnas_requeridas = (*columnas_predictoras, columna_objetivo, "parcela_id")
+    faltantes = [columna for columna in columnas_requeridas if columna not in observaciones]
+    if faltantes:
+        raise ValueError(f"Faltan columnas requeridas: {', '.join(faltantes)}")
+
+    def comparar_bloque(
+        indices_entrenamiento: tuple[int, ...],
+        indices_evaluacion: tuple[int, ...],
+        predicciones_base: pd.DataFrame,
+        nombre_bloque: str,
+    ) -> ResultadoComparacionMetodos:
+        datos_entrenamiento = observaciones.iloc[list(indices_entrenamiento)]
+        datos_evaluacion = observaciones.iloc[list(indices_evaluacion)]
+        modelo = entrenar(
+            datos_entrenamiento,
+            columnas_predictoras=columnas_predictoras,
+            columna_objetivo=columna_objetivo,
+        )
+        X_evaluacion = datos_evaluacion.loc[
+            :, ["parcela_id", columna_periodo, *columnas_predictoras]
+        ].rename(columns={columna_periodo: "periodo"})
+        predicciones_modelo = X_evaluacion.loc[
+            :, ["parcela_id", "periodo"]
+        ].copy()
+        predicciones_modelo["y_pred_modelo"] = predecir(
+            modelo,
+            X_evaluacion.loc[:, list(columnas_predictoras)],
+        )
+
+        claves_objetivo = X_evaluacion.loc[:, ["parcela_id", "periodo"]]
+        if not isinstance(predicciones_base, pd.DataFrame):
+            raise TypeError(
+                f"Las predicciones deterministas de {nombre_bloque} "
+                "deben ser un pandas.DataFrame"
+            )
+        columnas_base_requeridas = {"parcela_id", "periodo", "y_pred_base"}
+        if not columnas_base_requeridas.issubset(predicciones_base.columns):
+            raise ValueError(
+                f"Las predicciones deterministas de {nombre_bloque} deben incluir "
+                "parcela_id, periodo y y_pred_base"
+            )
+        if not predicciones_base.columns.is_unique:
+            raise ValueError(
+                f"Las predicciones deterministas de {nombre_bloque} "
+                "deben tener columnas únicas"
+            )
+        claves_base = predicciones_base.loc[:, ["parcela_id", "periodo"]]
+        if claves_base.isna().any().any() or claves_base.duplicated().any():
+            raise ValueError(
+                f"Las claves de predicciones deterministas de {nombre_bloque} "
+                "deben ser no nulas y únicas"
+            )
+        for parcela_id, periodo in claves_base.itertuples(index=False, name=None):
+            if not isinstance(parcela_id, str) or not parcela_id.strip():
+                raise ValueError(
+                    f"parcela_id de predicciones deterministas de {nombre_bloque} "
+                    "debe ser texto no vacío"
+                )
+            _fecha_inicio_semana_iso(periodo)
+        claves_objetivo_set = set(
+            claves_objetivo.itertuples(index=False, name=None)
+        )
+        claves_base_set = set(claves_base.itertuples(index=False, name=None))
+        if not claves_base_set.issubset(claves_objetivo_set):
+            raise ValueError(
+                f"Las predicciones deterministas de {nombre_bloque} "
+                "contienen claves ajenas al bloque evaluado"
+            )
+
+        historial_ingenua = datos_entrenamiento.loc[
+            :, ["parcela_id", columna_periodo, columna_objetivo]
+        ].rename(
+            columns={
+                columna_periodo: "periodo",
+                columna_objetivo: "y_real",
+            }
+        )
+        predicciones_ingenuas = linea_base_ingenua(
+            historial_ingenua,
+            claves_objetivo,
+        )
+        reales_evaluacion = datos_evaluacion.loc[
+            :, ["parcela_id", columna_periodo, columna_objetivo]
+        ].rename(
+            columns={
+                columna_periodo: "periodo",
+                columna_objetivo: "y_real",
+            }
+        )
+        return comparar_metodos_disponibles(
+            reales_evaluacion,
+            predicciones_modelo,
+            predicciones_base,
+            predicciones_ingenuas,
+        )
+
+    resultados_folds = []
+    for numero_fold, fold in enumerate(particiones.folds, start=1):
+        resultados_folds.append(
+            ResultadoFoldEvaluacionIntegrada(
+                numero_fold=numero_fold,
+                periodos_entrenamiento=fold.periodos_entrenamiento,
+                periodos_evaluacion=fold.periodos_validacion,
+                comparacion=comparar_bloque(
+                    fold.indices_entrenamiento,
+                    fold.indices_validacion,
+                    predicciones_deterministas[f"fold_{numero_fold}"],
+                    f"fold_{numero_fold}",
+                ),
+            )
+        )
+
+    indices_holdout = set(particiones.indices_holdout)
+    indices_entrenamiento_holdout = tuple(
+        posicion
+        for posicion in range(len(observaciones))
+        if posicion not in indices_holdout
+    )
+    periodos_entrenamiento_holdout = tuple(
+        sorted(
+            set(observaciones[columna_periodo])
+            - set(particiones.periodos_holdout),
+            key=_fecha_inicio_semana_iso,
+        )
+    )
+    resultado_holdout = ResultadoHoldoutEvaluacionIntegrada(
+        periodos_entrenamiento=periodos_entrenamiento_holdout,
+        periodos_evaluacion=particiones.periodos_holdout,
+        comparacion=comparar_bloque(
+            indices_entrenamiento_holdout,
+            particiones.indices_holdout,
+            predicciones_deterministas["holdout"],
+            "holdout",
+        ),
+    )
+    return ResultadoEvaluacionTemporalIntegrada(
         folds=tuple(resultados_folds),
         holdout=resultado_holdout,
     )

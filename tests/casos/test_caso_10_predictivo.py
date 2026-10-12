@@ -9,6 +9,7 @@ from app.core.proyeccion.predictivo import (
     ModeloEntrenado,
     entrenar,
     evaluar_temporal,
+    evaluar_temporal_integrada,
     particiones_temporales,
     predecir,
 )
@@ -87,6 +88,32 @@ def cosechas_temporales_sinteticas():
         for parcela_id, valor in (("P-001", 1), ("P-002", 2))
     ]
     return pd.DataFrame(filas, index=[100 + 3 * i for i in range(len(filas))])
+
+
+def _predicciones_deterministas_temporales_sinteticas(
+    observaciones, *, num_folds, num_periodos_holdout
+):
+    particiones = particiones_temporales(
+        observaciones,
+        columna_periodo="periodo",
+        num_folds=num_folds,
+        num_periodos_holdout=num_periodos_holdout,
+    )
+    predicciones = {}
+    particiones_por_clave = [
+        (
+            f"fold_{numero_fold}",
+            particion.indices_validacion,
+        )
+        for numero_fold, particion in enumerate(particiones.folds, start=1)
+    ]
+    particiones_por_clave.append(("holdout", particiones.indices_holdout))
+    for clave, indices in particiones_por_clave:
+        bloque = observaciones.iloc[list(indices)]
+        tabla = bloque.loc[:, ["parcela_id", "periodo"]].copy()
+        tabla["y_pred_base"] = bloque["objetivo_sintetico"].to_numpy() - 1.0
+        predicciones[clave] = tabla.iloc[::-1].reset_index(drop=True)
+    return predicciones
 
 
 def test_entrenar_crea_modelo_y_conserva_caracteristicas_en_orden_sintetico(
@@ -694,6 +721,405 @@ def test_evaluar_temporal_no_entrena_con_holdout_sintetico(
         max(fold.periodos_entrenamiento) < min(fold.periodos_evaluacion)
         for fold in resultado.folds
     )
+
+
+def test_evaluar_temporal_integrada_compara_tres_metodos_por_clave_sintetica(
+    cosechas_temporales_sinteticas,
+):
+    observaciones = cosechas_temporales_sinteticas
+    predicciones_deterministas = _predicciones_deterministas_temporales_sinteticas(
+        observaciones,
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    resultado = evaluar_temporal_integrada(
+        observaciones,
+        columna_periodo="periodo",
+        columnas_predictoras=("caracteristica_sintetica",),
+        columna_objetivo="objetivo_sintetico",
+        predicciones_deterministas=predicciones_deterministas,
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    assert len(resultado.folds) == 2
+    for fold in resultado.folds:
+        assert fold.comparacion.n_observaciones_candidatas == 4
+        assert fold.comparacion.n_observaciones_incluidas == 2
+        assert fold.comparacion.n_observaciones_excluidas == 2
+        assert fold.comparacion.comparacion is not None
+        assert fold.comparacion.comparacion.n_observaciones == 2
+        assert fold.comparacion.comparacion.mae_predictivo == pytest.approx(0.0)
+        assert fold.comparacion.comparacion.mae_determinista == pytest.approx(1.0)
+        assert fold.comparacion.comparacion.mae_ingenua == pytest.approx(0.0)
+        assert {
+            exclusion.periodo
+            for exclusion in fold.comparacion.observaciones_excluidas
+        } == {fold.periodos_evaluacion[1]}
+        assert all(
+            exclusion.metodos_sin_prediccion == ("ingenua",)
+            for exclusion in fold.comparacion.observaciones_excluidas
+        )
+
+    assert resultado.holdout.periodos_evaluacion == ("2026-W07", "2026-W08")
+    assert resultado.holdout.comparacion.n_observaciones_candidatas == 4
+    assert resultado.holdout.comparacion.n_observaciones_incluidas == 2
+    assert resultado.holdout.comparacion.n_observaciones_excluidas == 2
+    assert resultado.holdout.comparacion.comparacion is not None
+    assert resultado.holdout.comparacion.comparacion.mae_predictivo == pytest.approx(
+        0.0
+    )
+    assert resultado.holdout.comparacion.comparacion.mae_determinista == pytest.approx(
+        1.0
+    )
+    assert resultado.holdout.comparacion.comparacion.mae_ingenua == pytest.approx(
+        0.0
+    )
+
+
+def test_evaluar_temporal_integrada_reporta_predicciones_deterministas_ausentes(
+    cosechas_temporales_sinteticas,
+):
+    observaciones = cosechas_temporales_sinteticas
+    predicciones_deterministas = _predicciones_deterministas_temporales_sinteticas(
+        observaciones,
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    predicciones_deterministas["fold_1"] = predicciones_deterministas[
+        "fold_1"
+    ].loc[
+        ~(
+            (predicciones_deterministas["fold_1"]["parcela_id"] == "P-001")
+            & (predicciones_deterministas["fold_1"]["periodo"] == "2026-W03")
+        )
+    ].reset_index(drop=True)
+
+    resultado = evaluar_temporal_integrada(
+        observaciones,
+        columna_periodo="periodo",
+        columnas_predictoras=("caracteristica_sintetica",),
+        columna_objetivo="objetivo_sintetico",
+        predicciones_deterministas=predicciones_deterministas,
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    fold = resultado.folds[0]
+    assert fold.comparacion.n_observaciones_candidatas == 4
+    assert fold.comparacion.n_observaciones_incluidas == 1
+    assert fold.comparacion.n_observaciones_excluidas == 3
+    motivos_por_clave = {
+        (exclusion.parcela_id, exclusion.periodo): exclusion.metodos_sin_prediccion
+        for exclusion in fold.comparacion.observaciones_excluidas
+    }
+    assert motivos_por_clave == {
+        ("P-001", "2026-W03"): ("determinista",),
+        ("P-001", "2026-W04"): ("ingenua",),
+        ("P-002", "2026-W04"): ("ingenua",),
+    }
+
+
+def test_evaluar_temporal_integrada_registra_historial_fijo_sin_fuga(
+    cosechas_temporales_sinteticas, monkeypatch
+):
+    observaciones = cosechas_temporales_sinteticas
+    particiones = particiones_temporales(
+        observaciones,
+        columna_periodo="periodo",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    predicciones_deterministas = _predicciones_deterministas_temporales_sinteticas(
+        observaciones,
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    linea_base_real = predictivo.linea_base_ingenua
+    historiales_recibidos = []
+
+    def espiar_linea_base(historial, claves_pronostico):
+        historiales_recibidos.append(historial.copy(deep=True))
+        return linea_base_real(historial, claves_pronostico)
+
+    monkeypatch.setattr(predictivo, "linea_base_ingenua", espiar_linea_base)
+
+    def evaluar(datos):
+        return evaluar_temporal_integrada(
+            datos,
+            columna_periodo="periodo",
+            columnas_predictoras=("caracteristica_sintetica",),
+            columna_objetivo="objetivo_sintetico",
+            predicciones_deterministas=predicciones_deterministas,
+            num_folds=2,
+            num_periodos_holdout=2,
+        )
+
+    evaluar(observaciones)
+    historiales_originales = [historial.copy(deep=True) for historial in historiales_recibidos]
+    assert len(historiales_originales) == len(particiones.folds) + 1
+
+    for historial, fold in zip(historiales_originales, particiones.folds):
+        esperado = observaciones.iloc[list(fold.indices_entrenamiento)].loc[
+            :, ["parcela_id", "periodo", "objetivo_sintetico"]
+        ].rename(columns={"objetivo_sintetico": "y_real"})
+        pd.testing.assert_frame_equal(historial, esperado)
+        assert set(historial["periodo"]).isdisjoint(fold.periodos_validacion)
+        assert set(historial["periodo"]).isdisjoint(particiones.periodos_holdout)
+
+    indices_entrenamiento_holdout = [
+        posicion
+        for posicion in range(len(observaciones))
+        if posicion not in set(particiones.indices_holdout)
+    ]
+    esperado_historial_holdout = observaciones.iloc[
+        indices_entrenamiento_holdout
+    ].loc[:, ["parcela_id", "periodo", "objetivo_sintetico"]].rename(
+        columns={"objetivo_sintetico": "y_real"}
+    )
+    pd.testing.assert_frame_equal(historiales_originales[-1], esperado_historial_holdout)
+    assert set(historiales_originales[-1]["periodo"]).isdisjoint(
+        particiones.periodos_holdout
+    )
+
+    mascara_validacion_fold_1 = observaciones["periodo"].isin(
+        particiones.folds[0].periodos_validacion
+    )
+    observaciones_validacion_modificadas = observaciones.copy(deep=True)
+    observaciones_validacion_modificadas.loc[
+        mascara_validacion_fold_1, "objetivo_sintetico"
+    ] += 1000.0
+    historiales_recibidos.clear()
+    evaluar(observaciones_validacion_modificadas)
+    historiales_con_validacion_modificada = [
+        historial.copy(deep=True) for historial in historiales_recibidos
+    ]
+    pd.testing.assert_frame_equal(
+        historiales_originales[0],
+        historiales_con_validacion_modificada[0],
+    )
+
+    mascara_holdout = observaciones["periodo"].isin(particiones.periodos_holdout)
+    observaciones_holdout_modificadas = observaciones.copy(deep=True)
+    observaciones_holdout_modificadas.loc[
+        mascara_holdout, "objetivo_sintetico"
+    ] += 2000.0
+    historiales_recibidos.clear()
+    evaluar(observaciones_holdout_modificadas)
+    historiales_con_holdout_modificado = [
+        historial.copy(deep=True) for historial in historiales_recibidos
+    ]
+    pd.testing.assert_frame_equal(
+        historiales_originales[-1],
+        historiales_con_holdout_modificado[-1],
+    )
+
+
+def test_evaluar_temporal_integrada_mantiene_predicciones_y_recalcula_metricas(
+    cosechas_temporales_sinteticas, monkeypatch
+):
+    observaciones = cosechas_temporales_sinteticas
+    particiones = particiones_temporales(
+        observaciones,
+        columna_periodo="periodo",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    predicciones_deterministas = _predicciones_deterministas_temporales_sinteticas(
+        observaciones,
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    predecir_real = predictivo.predecir
+    linea_base_real = predictivo.linea_base_ingenua
+    predicciones_modelo_capturadas = []
+    predicciones_ingenuas_capturadas = []
+
+    def espiar_predecir(modelo, caracteristicas):
+        predicciones = predecir_real(modelo, caracteristicas)
+        predicciones_modelo_capturadas.append(predicciones.copy())
+        return predicciones
+
+    def espiar_linea_base(historial, claves_pronostico):
+        predicciones = linea_base_real(historial, claves_pronostico)
+        predicciones_ingenuas_capturadas.append(predicciones.copy(deep=True))
+        return predicciones
+
+    monkeypatch.setattr(predictivo, "predecir", espiar_predecir)
+    monkeypatch.setattr(predictivo, "linea_base_ingenua", espiar_linea_base)
+
+    def evaluar(datos):
+        return evaluar_temporal_integrada(
+            datos,
+            columna_periodo="periodo",
+            columnas_predictoras=("caracteristica_sintetica",),
+            columna_objetivo="objetivo_sintetico",
+            predicciones_deterministas=predicciones_deterministas,
+            num_folds=2,
+            num_periodos_holdout=2,
+        )
+
+    resultado_original = evaluar(observaciones)
+    predicciones_modelo_originales = [
+        predicciones.copy() for predicciones in predicciones_modelo_capturadas
+    ]
+    predicciones_ingenuas_originales = [
+        predicciones.copy(deep=True)
+        for predicciones in predicciones_ingenuas_capturadas
+    ]
+    assert len(predicciones_modelo_originales) == len(particiones.folds) + 1
+    assert len(predicciones_ingenuas_originales) == len(particiones.folds) + 1
+
+    objetivos_fold_modificados = observaciones.copy(deep=True)
+    mascara_fold_1 = objetivos_fold_modificados["periodo"].isin(
+        particiones.folds[0].periodos_validacion
+    )
+    objetivos_fold_modificados.loc[mascara_fold_1, "objetivo_sintetico"] += 1000.0
+    predicciones_modelo_capturadas.clear()
+    predicciones_ingenuas_capturadas.clear()
+    resultado_fold_modificado = evaluar(objetivos_fold_modificados)
+
+    np.testing.assert_array_equal(
+        predicciones_modelo_originales[0],
+        predicciones_modelo_capturadas[0],
+    )
+    pd.testing.assert_frame_equal(
+        predicciones_ingenuas_originales[0],
+        predicciones_ingenuas_capturadas[0],
+    )
+    assert (
+        resultado_original.folds[0].comparacion.comparacion.mae_predictivo
+        != resultado_fold_modificado.folds[0].comparacion.comparacion.mae_predictivo
+    )
+    assert (
+        resultado_original.folds[0].comparacion.comparacion.mae_ingenua
+        != resultado_fold_modificado.folds[0].comparacion.comparacion.mae_ingenua
+    )
+
+    objetivos_holdout_modificados = observaciones.copy(deep=True)
+    mascara_holdout = objetivos_holdout_modificados["periodo"].isin(
+        particiones.periodos_holdout
+    )
+    objetivos_holdout_modificados.loc[
+        mascara_holdout, "objetivo_sintetico"
+    ] += 2000.0
+    predicciones_modelo_capturadas.clear()
+    predicciones_ingenuas_capturadas.clear()
+    resultado_holdout_modificado = evaluar(objetivos_holdout_modificados)
+
+    np.testing.assert_array_equal(
+        predicciones_modelo_originales[-1],
+        predicciones_modelo_capturadas[-1],
+    )
+    pd.testing.assert_frame_equal(
+        predicciones_ingenuas_originales[-1],
+        predicciones_ingenuas_capturadas[-1],
+    )
+    assert (
+        resultado_original.holdout.comparacion.comparacion.mae_predictivo
+        != resultado_holdout_modificado.holdout.comparacion.comparacion.mae_predictivo
+    )
+    assert (
+        resultado_original.holdout.comparacion.comparacion.mae_ingenua
+        != resultado_holdout_modificado.holdout.comparacion.comparacion.mae_ingenua
+    )
+
+
+@pytest.mark.parametrize(
+    "clave_bloque",
+    ["fold_1", "holdout"],
+)
+def test_evaluar_temporal_integrada_rechaza_periodo_determinista_iso_invalido(
+    cosechas_temporales_sinteticas, clave_bloque
+):
+    observaciones = cosechas_temporales_sinteticas
+    predicciones_deterministas = _predicciones_deterministas_temporales_sinteticas(
+        observaciones,
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    predicciones_deterministas[clave_bloque] = predicciones_deterministas[
+        clave_bloque
+    ].copy()
+    predicciones_deterministas[clave_bloque].loc[
+        0, "periodo"
+    ] = "2026-W54"
+
+    with pytest.raises(ValueError, match="periodo ISO week inválido"):
+        evaluar_temporal_integrada(
+            observaciones,
+            columna_periodo="periodo",
+            columnas_predictoras=("caracteristica_sintetica",),
+            columna_objetivo="objetivo_sintetico",
+            predicciones_deterministas=predicciones_deterministas,
+            num_folds=2,
+            num_periodos_holdout=2,
+        )
+
+
+def test_evaluar_temporal_integrada_reporta_sin_interseccion(
+    cosechas_temporales_sinteticas,
+):
+    observaciones = cosechas_temporales_sinteticas
+    predicciones_deterministas = _predicciones_deterministas_temporales_sinteticas(
+        observaciones,
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    predicciones_deterministas = {
+        clave: pd.DataFrame(columns=["parcela_id", "periodo", "y_pred_base"])
+        for clave in predicciones_deterministas
+    }
+
+    resultado = evaluar_temporal_integrada(
+        observaciones,
+        columna_periodo="periodo",
+        columnas_predictoras=("caracteristica_sintetica",),
+        columna_objetivo="objetivo_sintetico",
+        predicciones_deterministas=predicciones_deterministas,
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    for evaluacion in (*resultado.folds, resultado.holdout):
+        assert evaluacion.comparacion.comparacion is None
+        assert evaluacion.comparacion.n_observaciones_candidatas == 4
+        assert evaluacion.comparacion.n_observaciones_incluidas == 0
+        assert evaluacion.comparacion.n_observaciones_excluidas == 4
+        assert all(
+            "determinista" in exclusion.metodos_sin_prediccion
+            for exclusion in evaluacion.comparacion.observaciones_excluidas
+        )
+
+
+def test_evaluar_temporal_integrada_rechaza_claves_deterministas_duplicadas(
+    cosechas_temporales_sinteticas,
+):
+    observaciones = cosechas_temporales_sinteticas
+    predicciones_deterministas = _predicciones_deterministas_temporales_sinteticas(
+        observaciones,
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    predicciones_deterministas["fold_1"] = pd.concat(
+        [
+            predicciones_deterministas["fold_1"],
+            predicciones_deterministas["fold_1"].iloc[[0]],
+        ],
+        ignore_index=True,
+    )
+
+    with pytest.raises(ValueError, match="no nulas y únicas"):
+        evaluar_temporal_integrada(
+            observaciones,
+            columna_periodo="periodo",
+            columnas_predictoras=("caracteristica_sintetica",),
+            columna_objetivo="objetivo_sintetico",
+            predicciones_deterministas=predicciones_deterministas,
+            num_folds=2,
+            num_periodos_holdout=2,
+        )
 
 
 @pytest.mark.parametrize(
