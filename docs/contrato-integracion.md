@@ -117,6 +117,9 @@ Alternativa aceptada: archivo CSV versionado con las mismas columnas.
 4. **Degradación controlada:** si falta un dato de entrada, el sistema responde qué falta,
    no se cae ni inventa el valor.
 5. **Prueba de integración conjunta: semana 12**, con datos reales de los tres equipos.
+6. **Parcela esperada sin aforamiento:** se excluye de proyección y programación y se informa
+   fuera de `item_plan`, con `parcela_id` y `motivo: "sin_aforamiento"`. No se generan fecha de
+   corte ni carga estimada ficticias.
 
 ---
 
@@ -137,6 +140,6 @@ que los equipos 1 y 3 los confirmen o los objeten en sesión de seguimiento.
 - [x] **Autenticación entre servicios** — propuesta: token compartido por variable de entorno
   (`INTEGRACION_TOKEN`) en cabecera `Authorization: Bearer`, suficiente para el alcance académico;
   no se monta infraestructura de red privada. Ver D-010.
-- [x] **Parcela sin aforar que el plan necesita** — propuesta: la parcela se excluye del plan de
-  esa semana con `motivo: "sin_aforamiento"` en `item_plan`, no se estima a ciegas ni se bloquea
-  el resto del plan. Ver D-011.
+- [x] **Parcela sin aforar que el plan necesita** — propuesta: se excluye de proyección y
+  programación y se reporta aparte de `item_plan` con `parcela_id` y
+  `motivo: "sin_aforamiento"`; no se estima a ciegas ni se bloquea el resto del plan. Ver D-011.

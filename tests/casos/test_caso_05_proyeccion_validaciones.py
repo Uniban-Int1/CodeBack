@@ -78,6 +78,34 @@ def test_proyeccion_rechaza_numero_de_plantas_negativo():
         proyectar(aforamiento, "2026-W38", ciclo_racimo_semanas=5)
 
 
+def test_proyeccion_rechaza_confianza_negativa():
+    """Caso 05d bis — confianza de aforamiento negativa.
+
+    Entradas:
+        num_plantas: 100, calidad_confianza: -0.1, ciclo: 5 semanas, pérdida: 0.
+
+    Resultado esperado: ValueError con el mensaje de validación del rango válido.
+    """
+    aforamiento = Aforamiento("P-003a", 100, 1.0, -0.1)
+
+    with pytest.raises(ValueError, match=r"calidad_confianza debe estar en \[0, 1\]"):
+        proyectar(aforamiento, "2026-W38", ciclo_racimo_semanas=5)
+
+
+def test_proyeccion_rechaza_confianza_mayor_que_uno():
+    """Caso 05d ter — confianza de aforamiento mayor que uno.
+
+    Entradas:
+        num_plantas: 100, calidad_confianza: 1.1, ciclo: 5 semanas, pérdida: 0.
+
+    Resultado esperado: ValueError con el mensaje de validación del rango válido.
+    """
+    aforamiento = Aforamiento("P-003b", 100, 1.0, 1.1)
+
+    with pytest.raises(ValueError, match=r"calidad_confianza debe estar en \[0, 1\]"):
+        proyectar(aforamiento, "2026-W38", ciclo_racimo_semanas=5)
+
+
 def test_proyeccion_rechaza_ciclo_cero():
     """Caso 05e — ciclo de racimo igual a cero semanas.
 

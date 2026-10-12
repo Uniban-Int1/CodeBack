@@ -146,12 +146,14 @@ no aporta a los criterios de validación del curso.
 **Fecha:** septiembre de 2026 · **Decidió:** el equipo (propuesta) · **Estado:** propuesta — pendiente de validar con equipos 1 y 3
 
 Si el motor de programación necesita una parcela que el Equipo 1 no ha aforado en el periodo,
-esa parcela queda fuera del plan de esa semana con `motivo: "sin_aforamiento"` en `item_plan`,
-y el resto del plan se genera igual.
+esa parcela se excluye de la proyección y de la programación. Se informa en un reporte separado
+de `item_plan`, con su `parcela_id` y `motivo: "sin_aforamiento"`. No se inventan fecha de corte,
+carga estimada ni otros datos, y el resto de las parcelas válidas sigue su flujo normal.
 
 **Por qué:** inventar un aforamiento rompe la trazabilidad (D-005) y puede generar una fecha de
 corte y una asignación de vehículo sobre un supuesto falso. Es preferible declarar el hueco que
-disfrazarlo de dato.
+disfrazarlo de dato. Este reporte separado evita introducir valores ficticios en los campos
+obligatorios de `item_plan`; no requiere cambios al esquema de PostgreSQL.
 
 ---
 

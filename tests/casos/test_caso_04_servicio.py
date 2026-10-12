@@ -6,7 +6,12 @@ import yaml
 
 from app.core.programacion.fechas import VentanaDespacho, VentanaInalcanzable
 from app.core.proyeccion.base import Aforamiento
-from app.core.servicio import RecomendacionInsumos, recomendar_insumos
+from app.core.servicio import (
+    ParcelaExcluida,
+    RecomendacionInsumos,
+    recomendar_insumos,
+    separar_aforamientos,
+)
 
 
 def parametros_simulados(coeficiente_cajas: float = 0.85) -> dict:
@@ -184,3 +189,28 @@ def test_recomendar_insumos_propaga_ventana_inalcanzable():
             minutos_acarreo=121,
             params=parametros_simulados(),
         )
+
+
+def test_separar_aforamientos_registra_parcela_sin_aforamiento():
+    disponibles, excluidas = separar_aforamientos(["P-101"], [])
+
+    assert disponibles == []
+    assert len(excluidas) == 1
+    assert isinstance(excluidas[0], ParcelaExcluida)
+    assert excluidas[0].parcela_id == "P-101"
+    assert excluidas[0].motivo == "sin_aforamiento"
+
+
+def test_separar_aforamientos_conserva_parcela_valida_en_entrada_mixta():
+    aforamiento = aforamiento_conocido()
+
+    disponibles, excluidas = separar_aforamientos(
+        ["P-101", aforamiento.parcela_id],
+        [aforamiento],
+    )
+
+    assert disponibles == [aforamiento]
+    assert disponibles[0] is aforamiento
+    assert [(item.parcela_id, item.motivo) for item in excluidas] == [
+        ("P-101", "sin_aforamiento")
+    ]

@@ -21,6 +21,39 @@ class RecomendacionInsumos:
     version_metodo: str
 
 
+@dataclass(frozen=True)
+class ParcelaExcluida:
+    parcela_id: str
+    motivo: str = "sin_aforamiento"
+
+
+def separar_aforamientos(
+    parcela_ids_esperadas: list[str],
+    aforamientos_del_periodo: list[Aforamiento],
+) -> tuple[list[Aforamiento], list[ParcelaExcluida]]:
+    """Separa aforamientos disponibles de parcelas esperadas sin aforamiento.
+
+    `aforamientos_del_periodo` debe contener únicamente los aforamientos aplicables
+    al periodo que se está preparando. Los aforamientos devueltos quedan listos para
+    proyectarse; las exclusiones no incluyen datos estimados.
+    """
+    aforamientos_por_parcela = {
+        aforamiento.parcela_id: aforamiento
+        for aforamiento in aforamientos_del_periodo
+    }
+    disponibles: list[Aforamiento] = []
+    excluidas: list[ParcelaExcluida] = []
+
+    for parcela_id in parcela_ids_esperadas:
+        aforamiento = aforamientos_por_parcela.get(parcela_id)
+        if aforamiento is None:
+            excluidas.append(ParcelaExcluida(parcela_id=parcela_id))
+        else:
+            disponibles.append(aforamiento)
+
+    return disponibles, excluidas
+
+
 def recomendar_insumos(
     aforamiento: Aforamiento,
     ventana: VentanaDespacho,
