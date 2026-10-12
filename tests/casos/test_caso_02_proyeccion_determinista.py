@@ -39,6 +39,8 @@ def test_proyeccion_situacion_normal():
     )
     assert resultado.volumen_racimos == 145.6
     assert resultado.metodo == "determinista-v1"
+    assert resultado.parcela_id == "P-018"
+    assert resultado.periodo == "2026-W38"
 
 
 def test_proyeccion_rechaza_confianza_fuera_de_rango():

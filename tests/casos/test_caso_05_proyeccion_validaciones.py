@@ -132,6 +132,17 @@ def test_proyeccion_rechaza_ciclo_cero():
         proyectar(aforamiento, "2026-W38", ciclo_racimo_semanas=0)
 
 
+def test_proyeccion_rechaza_ciclo_de_racimo_negativo():
+    """Rechaza un ciclo sintético negativo, no histórico de Unibán.
+
+    sintetico_ciclo_racimo_semanas: -1.
+    """
+    aforamiento = Aforamiento("P-006", 100, 1.0, 1.0)
+
+    with pytest.raises(ValueError):
+        proyectar(aforamiento, "2026-W38", ciclo_racimo_semanas=-1)
+
+
 def test_proyeccion_rechaza_factor_perdida_mayor_que_uno():
     """Caso 05f — factor de pérdida fuera de rango.
 
@@ -150,3 +161,40 @@ def test_proyeccion_rechaza_factor_perdida_mayor_que_uno():
         proyectar(
             aforamiento, "2026-W38", ciclo_racimo_semanas=5, factor_perdida=1.5
         )
+
+
+def test_proyeccion_rechaza_factor_perdida_negativo():
+    """Rechaza una pérdida sintética negativa, no histórica de Unibán.
+
+    sintetico_factor_perdida: -0.1.
+    """
+    aforamiento = Aforamiento("P-007", 100, 1.0, 1.0)
+
+    with pytest.raises(ValueError):
+        proyectar(
+            aforamiento,
+            "2026-W38",
+            ciclo_racimo_semanas=5,
+            factor_perdida=-0.1,
+        )
+
+
+def test_proyeccion_acepta_factor_perdida_igual_a_uno():
+    """Usa pérdida total sintética; el valor no es histórico de Unibán.
+
+    sintetico_num_plantas: 100; sintetico_calidad_confianza: 1.0
+    sintetico_ciclo_racimo_semanas: 5; sintetico_factor_perdida: 1.0.
+    """
+    aforamiento = Aforamiento("P-008", 100, 1.0, 1.0)
+
+    resultado = proyectar(
+        aforamiento,
+        "2026-W38",
+        ciclo_racimo_semanas=5,
+        factor_perdida=1.0,
+    )
+
+    assert resultado.volumen_racimos == pytest.approx(0.0)
+    assert resultado.parcela_id == "P-008"
+    assert resultado.periodo == "2026-W38"
+    assert resultado.metodo == "determinista-v1"
