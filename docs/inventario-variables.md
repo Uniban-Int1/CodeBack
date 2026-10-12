@@ -10,6 +10,19 @@
 > es lo propuesto o acordado provisionalmente con los equipos, no evidencia de una
 > entrega real.
 
+## Alcance de la revisión actual
+
+Durante esta revisión no se dispuso de acceso a un extracto real autorizado del
+histórico de Unibán. Por ello, no se realizaron pruebas con datos reales para verificar
+la disponibilidad efectiva de variables, los tipos observados, las unidades, la
+cobertura temporal, la frecuencia, los rangos ni los patrones de valores ausentes.
+
+El inventario actual se basa en el código, los modelos, los contratos, la configuración
+y las pruebas sintéticas del repositorio. Estas fuentes describen el diseño y el
+comportamiento implementado, pero no demuestran qué contiene realmente el histórico.
+La falta de evidencia significa que la disponibilidad no se pudo verificar; no significa
+que una variable esté ausente del histórico.
+
 | Variable | Fuente responsable | Tipo indicado en contrato/documentación | Unidad | Estado según contrato | Verificación en datos reales | Cobertura temporal |
 |---|---|---|---|---|---|---|
 | `parcela_id` | Equipo 1 / Equipo 3 | string | No aplica | Presente como requerido en el contrato; formato `P-NNN` es propuesta D-007 | Pendiente | No aplica; disponibilidad del identificador real pendiente |
@@ -36,6 +49,10 @@
   (cajas, cartón y bolsas). No inferirlas de los coeficientes configurados.
 - **Cobertura temporal:** confirmar desde qué fecha hasta qué fecha existe información y
   si la cobertura es continua por periodo, parcela e insumo.
+- **Verificación con extracto autorizado:** cuando se proporcione, registrar por variable
+  su disponibilidad efectiva, tipo observado, unidad, rangos, frecuencia, cobertura y
+  patrones de valores ausentes; distinguir los resultados observados de los campos no
+  verificables o no incluidos en el extracto.
 - **Frecuencia y actualidad:** confirmar cada cuánto se actualiza el inventario y qué
   fecha/hora representa el saldo entregado (corte o última actualización).
 - **Dato ausente frente a cero:** acordar cómo distinguir “inventario conocido igual a
