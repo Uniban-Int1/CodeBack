@@ -3,7 +3,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from app.core.proyeccion.predictivo import ModeloEntrenado, entrenar, predecir
+from app.core.proyeccion.predictivo import (
+    ModeloEntrenado,
+    entrenar,
+    particiones_temporales,
+    predecir,
+)
 
 
 @pytest.fixture
@@ -27,6 +32,33 @@ def modelo_sintetico(observaciones_sinteticas):
         ),
         columna_objetivo="objetivo_sintetico",
     )
+
+
+@pytest.fixture
+def observaciones_temporales_sinteticas():
+    periodos = (
+        "2025-W51",
+        "2025-W52",
+        "2026-W01",
+        "2026-W02",
+        "2026-W03",
+        "2026-W04",
+        "2026-W05",
+        "2026-W06",
+    )
+    filas = [
+        {
+            "parcela_id": f"P-{parcela:03d}",
+            "periodo": periodo,
+            "caracteristica_sintetica": float(parcela),
+            "objetivo_sintetico": float(indice + parcela),
+        }
+        for indice, periodo in enumerate(reversed(periodos))
+        for parcela in (1, 2)
+    ]
+    observaciones = pd.DataFrame(filas)
+    observaciones.index = [indice // 2 for indice in range(len(observaciones))]
+    return observaciones
 
 
 def test_entrenar_crea_modelo_y_conserva_caracteristicas_en_orden_sintetico(
@@ -255,3 +287,309 @@ def test_predecir_rechaza_claves_parcela_periodo_duplicadas_sinteticas(
 
     with pytest.raises(ValueError, match="debe ser única"):
         predecir(modelo_sintetico, X_sintetico_duplicado)
+
+
+def test_particiones_temporales_ordena_periodos_iso_y_separa_holdout_sintetico(
+    observaciones_temporales_sinteticas,
+):
+    particiones = particiones_temporales(
+        observaciones_temporales_sinteticas,
+        columna_periodo="periodo",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    assert particiones.periodos_holdout == ("2026-W05", "2026-W06")
+    assert len(particiones.folds) == 2
+    assert not set(particiones.periodos_holdout).intersection(
+        periodo
+        for fold in particiones.folds
+        for periodo in (*fold.periodos_entrenamiento, *fold.periodos_validacion)
+    )
+
+
+def test_particiones_temporales_no_filtra_futuro_y_mantiene_periodos_juntos(
+    observaciones_temporales_sinteticas,
+):
+    datos = observaciones_temporales_sinteticas
+    particiones = particiones_temporales(
+        datos,
+        columna_periodo="periodo",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+
+    for fold in particiones.folds:
+        periodos_train = set(fold.periodos_entrenamiento)
+        periodos_validacion = set(fold.periodos_validacion)
+        assert max(periodos_train) < min(periodos_validacion)
+        assert periodos_train.isdisjoint(periodos_validacion)
+
+        periodos_indices_train = set(
+            datos.iloc[list(fold.indices_entrenamiento)]["periodo"]
+        )
+        periodos_indices_validacion = set(
+            datos.iloc[list(fold.indices_validacion)]["periodo"]
+        )
+        assert periodos_indices_train == periodos_train
+        assert periodos_indices_validacion == periodos_validacion
+        assert set(fold.indices_entrenamiento) == {
+            posicion
+            for posicion, periodo in enumerate(datos["periodo"])
+            if periodo in periodos_train
+        }
+        assert set(fold.indices_validacion) == {
+            posicion
+            for posicion, periodo in enumerate(datos["periodo"])
+            if periodo in periodos_validacion
+        }
+
+    assert set(datos.iloc[list(particiones.indices_holdout)]["periodo"]) == set(
+        particiones.periodos_holdout
+    )
+
+
+def test_particiones_temporales_usa_ventanas_expansivas_sinteticas(
+    observaciones_temporales_sinteticas,
+):
+    particiones = particiones_temporales(
+        observaciones_temporales_sinteticas,
+        columna_periodo="periodo",
+        num_folds=2,
+        num_periodos_holdout=2,
+    )
+    tamaños_entrenamiento = [
+        len(fold.periodos_entrenamiento) for fold in particiones.folds
+    ]
+
+    assert tamaños_entrenamiento == sorted(tamaños_entrenamiento)
+    assert tamaños_entrenamiento[0] < tamaños_entrenamiento[1]
+    assert particiones.folds[0].periodos_entrenamiento == (
+        "2025-W51",
+        "2025-W52",
+    )
+    assert particiones.folds[1].periodos_entrenamiento == (
+        "2025-W51",
+        "2025-W52",
+        "2026-W01",
+        "2026-W02",
+    )
+
+
+def test_particiones_temporales_permite_huecos_sin_inventar_semanas():
+    observaciones_sinteticas_con_hueco = pd.DataFrame(
+        {
+            "periodo": [
+                "2026-W01",
+                "2026-W03",
+                "2026-W05",
+                "2026-W07",
+                "2026-W09",
+            ]
+        }
+    )
+
+    particiones = particiones_temporales(
+        observaciones_sinteticas_con_hueco,
+        columna_periodo="periodo",
+        num_folds=2,
+        num_periodos_holdout=1,
+    )
+
+    assert particiones.periodos_holdout == ("2026-W09",)
+    assert tuple(
+        periodo
+        for fold in particiones.folds
+        for periodo in fold.periodos_validacion
+    ) == ("2026-W05", "2026-W07")
+
+
+@pytest.mark.parametrize(
+    ("observaciones", "columna_periodo", "num_folds", "num_periodos_holdout"),
+    [
+        (pd.DataFrame({"periodo": []}), "periodo", 1, 1),
+        (pd.DataFrame({"otra": ["2026-W01"]}), "periodo", 1, 1),
+        (pd.DataFrame({"periodo": [None, "2026-W01"]}), "periodo", 1, 1),
+        (pd.DataFrame({"periodo": [202601, "2026-W01"]}), "periodo", 1, 1),
+        (pd.DataFrame({"periodo": ["2026-W00", "2026-W01"]}), "periodo", 1, 1),
+        (pd.DataFrame({"periodo": ["2026-W54", "2027-W01"]}), "periodo", 1, 1),
+        (pd.DataFrame({"periodo": ["2026-01", "2026-W01"]}), "periodo", 1, 1),
+        (pd.DataFrame({"periodo": ["2026-W01", "2026-W02"]}), "periodo", 0, 1),
+        (pd.DataFrame({"periodo": ["2026-W01", "2026-W02"]}), "periodo", 1, 0),
+        (
+            pd.DataFrame(
+                {"periodo": ["2026-W01", "2026-W02", "2026-W03"]}
+            ),
+            "periodo",
+            2,
+            1,
+        ),
+        (
+            pd.DataFrame(
+                {"periodo": ["2026-W01", "2026-W02", "2026-W03"]}
+            ),
+            "periodo",
+            1,
+            3,
+        ),
+    ],
+)
+def test_particiones_temporales_rechaza_entradas_o_configuracion_invalida(
+    observaciones, columna_periodo, num_folds, num_periodos_holdout
+):
+    with pytest.raises((TypeError, ValueError)):
+        particiones_temporales(
+            observaciones,
+            columna_periodo=columna_periodo,
+            num_folds=num_folds,
+            num_periodos_holdout=num_periodos_holdout,
+        )
+
+
+def test_particiones_temporales_rechaza_claves_parcela_periodo_duplicadas():
+    observaciones_sinteticas_duplicadas = pd.DataFrame(
+        {
+            "parcela_id": ["P-001", "P-001", "P-002", "P-001"],
+            "periodo": [
+                "2026-W01",
+                "2026-W01",
+                "2026-W02",
+                "2026-W03",
+            ],
+        }
+    )
+
+    with pytest.raises(ValueError, match="debe ser única"):
+        particiones_temporales(
+            observaciones_sinteticas_duplicadas,
+            columna_periodo="periodo",
+            num_folds=1,
+            num_periodos_holdout=1,
+        )
+
+
+def test_particiones_temporales_rechaza_claves_parcela_semana_duplicadas():
+    observaciones_sinteticas_duplicadas = pd.DataFrame(
+        {
+            "parcela_id": ["P-001", "P-001", "P-002", "P-001"],
+            "semana": [
+                "2026-W01",
+                "2026-W01",
+                "2026-W02",
+                "2026-W03",
+            ],
+        }
+    )
+
+    with pytest.raises(ValueError, match="parcela_id y semana"):
+        particiones_temporales(
+            observaciones_sinteticas_duplicadas,
+            columna_periodo="semana",
+            num_folds=1,
+            num_periodos_holdout=1,
+        )
+
+
+def test_periodo_iso_acepta_semana_53_en_anio_valido_sintetico():
+    observaciones_sinteticas = pd.DataFrame(
+        {
+            "periodo": [
+                "2020-W52",
+                "2020-W53",
+                "2021-W01",
+                "2021-W02",
+                "2021-W03",
+            ]
+        }
+    )
+
+    particiones = particiones_temporales(
+        observaciones_sinteticas,
+        columna_periodo="periodo",
+        num_folds=2,
+        num_periodos_holdout=1,
+    )
+
+    assert particiones.folds[0].periodos_entrenamiento == (
+        "2020-W52",
+        "2020-W53",
+    )
+    assert particiones.folds[0].periodos_validacion == ("2021-W01",)
+    assert particiones.folds[1].periodos_entrenamiento == (
+        "2020-W52",
+        "2020-W53",
+        "2021-W01",
+    )
+    assert particiones.periodos_holdout == ("2021-W03",)
+
+
+def test_periodo_iso_rechaza_semana_53_en_anio_invalido_sintetico():
+    observaciones_sinteticas = pd.DataFrame(
+        {"periodo": ["2021-W52", "2021-W53", "2022-W01"]}
+    )
+
+    with pytest.raises(ValueError, match="periodo ISO week inválido"):
+        particiones_temporales(
+            observaciones_sinteticas,
+            columna_periodo="periodo",
+            num_folds=2,
+            num_periodos_holdout=1,
+        )
+
+
+def test_particiones_temporales_conserva_posiciones_con_indice_desordenado():
+    observaciones_sinteticas = pd.DataFrame(
+        {
+            "parcela_id": [
+                "P-003",
+                "P-001",
+                "P-002",
+                "P-001",
+                "P-003",
+                "P-002",
+                "P-004",
+            ],
+            "periodo": [
+                "2026-W03",
+                "2026-W01",
+                "2026-W02",
+                "2026-W03",
+                "2026-W01",
+                "2026-W01",
+                "2026-W04",
+            ],
+            "identificador_fila_sintetica": [
+                "fila-0",
+                "fila-1",
+                "fila-2",
+                "fila-3",
+                "fila-4",
+                "fila-5",
+                "fila-6",
+            ],
+        },
+        index=[40, 5, 90, 2, 71, 13, 1],
+    )
+
+    particiones = particiones_temporales(
+        observaciones_sinteticas,
+        columna_periodo="periodo",
+        num_folds=2,
+        num_periodos_holdout=1,
+    )
+
+    filas_holdout = observaciones_sinteticas.iloc[list(particiones.indices_holdout)][
+        "identificador_fila_sintetica"
+    ].tolist()
+    filas_entrenamiento = observaciones_sinteticas.iloc[
+        list(particiones.folds[0].indices_entrenamiento)
+    ]["identificador_fila_sintetica"].tolist()
+    filas_validacion = observaciones_sinteticas.iloc[
+        list(particiones.folds[0].indices_validacion)
+    ]["identificador_fila_sintetica"].tolist()
+
+    assert filas_holdout == ["fila-6"]
+    assert filas_entrenamiento == ["fila-1", "fila-4", "fila-5"]
+    assert filas_validacion == ["fila-2"]
+    assert particiones.folds[1].indices_entrenamiento == (1, 4, 5, 2)
+    assert particiones.folds[1].indices_validacion == (0, 3)
