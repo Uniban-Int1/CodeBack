@@ -1,25 +1,28 @@
-"""Caso 03 — derivación de insumos de empaque, situación normal.
-
-Usa el mismo ejemplo publicado en docs/contrato-integracion.md para que el resultado
-sea consistente entre lo que promete el contrato y lo que calcula el código.
-
-Entradas:
-    volumen_racimos: 484.7
-    coeficiente cajas: 0.85 (racimos -> cajas)
-    inventario cajas: 300
-
-Cálculo a mano:
-    cantidad_requerida = 484.7 * 0.85 = 411.995  ->  redondeado a 2 decimales: 412.0
-    deficit = 412.0 - 300 = 112.0
-
-Resultado esperado: cantidad_requerida=412.0, deficit=112.0
-"""
+"""Casos de cálculo manual de estimación de insumos."""
 from datetime import date
 
 from app.core.insumos.estimacion import estimar
 
 
 def test_estimacion_situacion_normal():
+    """T-09 06 — requerimiento de cajas para entradas sintéticas.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
+
+    Entradas:
+        sintetico_volumen_racimos: 484.7
+        sintetico_coeficiente_cajas: 0.85
+        sintetico_inventario_cajas: 300
+        sintetico_fecha: 2026-09-20
+
+    Cálculo manual:
+        cantidad requerida = 484.7 × 0.85 = 411.995.
+        redondeada a dos decimales por estimar = 412.0.
+        déficit = max(0, 412.0 - 300) = 112.0.
+
+    Resultado esperado: requerido 412.0; inventario 300; déficit 112.0.
+    Justificación: el déficit es la diferencia positiva entre el requerido redondeado y el inventario.
+    """
     resultado = estimar(
         volumen_racimos=484.7,
         fecha=date(2026, 9, 20),
