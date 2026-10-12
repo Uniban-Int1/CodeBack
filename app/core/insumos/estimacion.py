@@ -21,6 +21,7 @@ class RequerimientoInsumo:
     cantidad_requerida: float
     inventario_disponible: float
     deficit: float
+    excedente: float = 0.0
 
 
 def estimar(
@@ -40,21 +41,26 @@ def estimar(
     """
     if volumen_racimos < 0:
         raise ValueError("volumen_racimos no puede ser negativo")
+    for insumo, disponible in inventario.items():
+        if disponible < 0:
+            raise ValueError(f"inventario de '{insumo}' no puede ser negativo")
 
     resultados = []
     for insumo, coeficiente in coeficientes.items():
         if coeficiente < 0:
             raise ValueError(f"coeficiente de '{insumo}' no puede ser negativo")
-        cantidad_requerida = volumen_racimos * coeficiente
+        cantidad_requerida = round(volumen_racimos * coeficiente, 2)
         disponible = inventario.get(insumo, 0.0)
-        deficit = max(0.0, cantidad_requerida - disponible)
+        deficit = round(max(0.0, cantidad_requerida - disponible), 2)
+        excedente = round(max(0.0, disponible - cantidad_requerida), 2)
         resultados.append(
             RequerimientoInsumo(
                 insumo=insumo,
                 fecha=fecha,
-                cantidad_requerida=round(cantidad_requerida, 2),
+                cantidad_requerida=cantidad_requerida,
                 inventario_disponible=disponible,
-                deficit=round(deficit, 2),
+                deficit=deficit,
+                excedente=excedente,
             )
         )
     return resultados
