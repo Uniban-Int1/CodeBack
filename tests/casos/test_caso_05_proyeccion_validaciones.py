@@ -5,15 +5,24 @@ from app.core.proyeccion.base import Aforamiento, proyectar
 
 
 def test_proyeccion_cero_plantas_da_cero():
-    """Caso 05 — aforamiento con cero plantas.
+    """T-09 05 — proyección con cero plantas en un escenario sintético.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
 
     Entradas:
-        num_plantas: 0, calidad_confianza: 1.0, ciclo: 5 semanas, pérdida: 0.
+        sintetico_num_plantas: 0
+        sintetico_calidad_confianza: 1.0
+        sintetico_area_ha: 1.0
+        sintetico_ciclo_racimo_semanas: 5
+        sintetico_factor_perdida: 0 (valor por defecto)
+        sintetico_periodo: 2026-W38
+        sintetico_parcela_id: P-000
 
-    Cálculo a mano:
-        volumen = 0 * (1 / 5) * 1.0 * (1 - 0) = 0.0.
+    Cálculo manual:
+        volumen = 0 × (1 / 5) × 1.0 × (1 - 0) = 0.0.
 
     Resultado esperado: 0.0 racimos.
+    Justificación: el número de plantas es cero, por lo que el producto de la fórmula es cero.
     """
     aforamiento = Aforamiento("P-000", 0, 1.0, 1.0)
 

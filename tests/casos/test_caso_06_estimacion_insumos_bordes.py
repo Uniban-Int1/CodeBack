@@ -7,18 +7,25 @@ from app.core.insumos.estimacion import estimar
 
 
 def test_estimacion_tres_insumos_con_deficits_por_nombre():
-    """Caso 06 — tres insumos, comprobados por nombre sin depender del orden.
+    """T-09 07 — requerimientos de tres insumos en un escenario sintético.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
 
     Entradas:
-        volumen: 20; coeficientes: cajas 0.85, carton 0.85, bolsas 1.0;
-        inventario: cajas 10, carton 5, bolsas 15.
+        sintetico_volumen_racimos: 20
+        sintetico_coeficientes: cajas 0.85, carton 0.85, bolsas 1.0
+        sintetico_inventario: cajas 10, carton 5, bolsas 15
+        sintetico_fecha: 2026-09-21
 
-    Cálculo a mano:
-        cajas: requerida = 20 * 0.85 = 17.0; déficit = 17.0 - 10 = 7.0.
-        carton: requerida = 20 * 0.85 = 17.0; déficit = 17.0 - 5 = 12.0.
-        bolsas: requerida = 20 * 1.0 = 20.0; déficit = 20.0 - 15 = 5.0.
+    Cálculo manual:
+        cajas: requerida = 20 × 0.85 = 17.0; déficit = max(0, 17.0 - 10) = 7.0.
+        carton: requerida = 20 × 0.85 = 17.0; déficit = max(0, 17.0 - 5) = 12.0.
+        bolsas: requerida = 20 × 1.0 = 20.0; déficit = max(0, 20.0 - 15) = 5.0.
 
-    Resultado esperado: requeridos 17.0/17.0/20.0 y déficits 7.0/12.0/5.0.
+    Resultado esperado: requeridos cajas/carton/bolsas 17.0/17.0/20.0;
+    déficits 7.0/12.0/5.0, respectivamente.
+    Justificación: se multiplica el volumen por cada coeficiente y se resta su inventario,
+    limitando cada déficit al mínimo de cero.
     """
     resultado = estimar(
         volumen_racimos=20,
@@ -37,16 +44,22 @@ def test_estimacion_tres_insumos_con_deficits_por_nombre():
 
 
 def test_estimacion_inventario_igual_al_requerido_da_deficit_cero():
-    """Caso 06b — inventario igual a la cantidad requerida.
+    """T-09 08 — inventario igual al requerido en un escenario sintético.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
 
     Entradas:
-        volumen: 20; coeficiente cajas: 0.85; inventario cajas: 17.
+        sintetico_volumen_racimos: 20
+        sintetico_coeficiente_cajas: 0.85
+        sintetico_inventario_cajas: 17
+        sintetico_fecha: 2026-09-21
 
-    Cálculo a mano:
-        requerida = 20 * 0.85 = 17.0.
+    Cálculo manual:
+        requerida = 20 × 0.85 = 17.0.
         déficit = max(0, 17.0 - 17) = 0.0.
 
     Resultado esperado: requerida 17.0 y déficit 0.0.
+    Justificación: el inventario iguala exactamente el requerido, así que la diferencia es cero.
     """
     resultado = estimar(
         volumen_racimos=20,

@@ -7,17 +7,23 @@ from app.core.insumos.estimacion import estimar
 
 
 def test_estimacion_reporta_excedente_con_inventario_mayor_al_requerido():
-    """Caso 07 — inventario mayor que el requerimiento de cajas.
+    """T-09 09 — inventario superior al requerido en un escenario sintético.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
 
     Entradas:
-        volumen: 20; coeficiente cajas: 0.85; inventario cajas: 30.
+        sintetico_volumen_racimos: 20
+        sintetico_coeficiente_cajas: 0.85
+        sintetico_inventario_cajas: 30
+        sintetico_fecha: 2026-09-21
 
-    Cálculo a mano:
-        requerida = 20 * 0.85 = 17.0.
+    Cálculo manual:
+        requerida = 20 × 0.85 = 17.0.
         déficit = max(0, 17.0 - 30) = 0.0.
         excedente = max(0, 30 - 17.0) = 13.0.
 
     Resultado esperado: requerida 17.0, déficit 0.0 y excedente 13.0.
+    Justificación: el inventario excede el requerido en 13.0 y el déficit se limita a cero.
     """
     resultado = estimar(
         volumen_racimos=20,

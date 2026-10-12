@@ -176,6 +176,25 @@ def test_programar_no_debe_presentar_como_exitosa_una_fecha_limite_vencida():
 
 
 def test_viajes_necesarios_redondea_hacia_arriba_y_cubre_cargas_no_positivas():
+    """T-09 10 — viajes necesarios para entradas sintéticas.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
+
+    Entradas:
+        sintetico_medio_acarreo: cable_via
+        sintetico_capacidad_racimos_por_viaje: 65
+        sintetico_racimos_evaluados: 130, 131, 0, -1
+        sintetico_minutos_por_viaje: 40
+
+    Cálculo manual:
+        130 / 65 = 2; ceil(2) = 2 viajes.
+        131 / 65 = 2.01538...; ceil(2.01538...) = 3 viajes.
+        Para 0 y -1, la función retorna 0 porque su condición implementada es racimos <= 0.
+
+    Resultado esperado: 2, 3, 0 y 0 viajes, respectivamente.
+    Justificación: para cargas positivas se redondea hacia arriba el cociente; para cargas
+    no positivas se documenta la rama existente, sin atribuirle otra regla de negocio.
+    """
     medio = MedioAcarreo(
         nombre="cable_via",
         capacidad_racimos_por_viaje=65,
@@ -204,10 +223,54 @@ def test_viajes_necesarios_rechaza_capacidad_por_viaje_invalida():
     [(60, 40, True), (60, 41, False), (0, -1, False)],
 )
 def test_cabe_en_vehiculo(carga_actual, carga_nueva, esperado):
+    """T-09 11 — comparación de carga con capacidad en un escenario sintético.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
+
+    Entradas:
+        sintetico_vehiculo_id: V1
+        sintetico_capacidad_vehiculo: 100 racimos
+        sintetico_casos_carga_actual_y_nueva: (60, 40), (60, 41), (0, -1)
+
+    Cálculo manual:
+        60 + 40 = 100; no supera la capacidad: True.
+        60 + 41 = 101; supera la capacidad: False.
+        Para carga nueva -1, la función retorna False por su guardia carga_nueva < 0.
+
+    Resultado esperado: True, False y False, respectivamente.
+    Justificación: para cargas no negativas se compara la suma con la capacidad; la carga
+    negativa sigue la rama de rechazo implementada.
+    """
     assert cabe_en_vehiculo(carga_actual, carga_nueva, Vehiculo("V1", 100)) is esperado
 
 
 def test_uso_capacidad_usa_solo_carga_asignada_y_maneja_sin_vehiculos():
+    """T-09 12 — uso de capacidad con un plan sintético.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
+
+    Entradas:
+        sintetico_periodo: 2026-W42
+        sintetico_vehiculos: V1 con capacidad 100 y V2 con capacidad 100 racimos
+        sintetico_items_plan:
+            P-001, 2026-10-16 14:00, vehículo V1, orden 1, carga 60,
+            cumple_ventana=True;
+            P-002, 2026-10-16 14:00, sin vehículo, orden 2, carga 40,
+            cumple_ventana=False.
+        sintetico_vehiculos_sin_capacidad: lista vacía
+        sintetico_vehiculo_con_capacidad_cero: V1 con capacidad 0
+
+    Cálculo manual:
+        carga asignada = 60; los 40 racimos sin asignación no se suman.
+        capacidad total = 100 + 100 = 200.
+        uso = carga asignada / capacidad total = 60 / 200 = 0.3.
+        Sin vehículos, la función retorna 0.0.
+        Con capacidad total cero, la función también retorna 0.0.
+
+    Resultado esperado: 0.3; sin vehículos 0.0; con capacidad total cero 0.0.
+    Justificación: la función divide la suma de cargas asignadas por la capacidad total,
+    y devuelve cero en los dos casos sin capacidad utilizable probados.
+    """
     plan = PlanRecoleccion(
         periodo="2026-W42",
         items=[

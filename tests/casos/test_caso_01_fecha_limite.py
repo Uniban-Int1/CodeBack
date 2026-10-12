@@ -1,17 +1,4 @@
-"""Caso 01 — fecha límite de corte, situación normal.
-
-Entradas:
-    ventana de despacho: 2026-09-21 06:00 a 16:00
-    tiempo de empaque:   120 min
-    tiempo de acarreo:    35 min
-    margen de seguridad:  30 min
-
-Cálculo a mano:
-    holgura total = 120 + 35 + 30 = 185 min = 3 h 05 min
-    16:00 - 3 h 05 min = 12:55 del 2026-09-21
-
-Resultado esperado: 2026-09-21 12:55
-"""
+"""Casos de cálculo manual de fecha límite de corte."""
 from datetime import datetime
 
 import pytest
@@ -24,6 +11,23 @@ from app.core.programacion.fechas import (
 
 
 def test_fecha_limite_situacion_normal():
+    """T-09 01 — fecha límite para un escenario sintético normal.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
+
+    Entradas:
+        sintetico_ventana: 2026-09-21 06:00 a 16:00
+        sintetico_minutos_empaque: 120
+        sintetico_minutos_acarreo: 35
+        sintetico_margen_seguridad_min: 30
+
+    Cálculo manual:
+        holgura = 120 + 35 + 30 = 185 minutos = 3 horas y 5 minutos.
+        límite = 16:00 - 3 horas y 5 minutos = 12:55 del 2026-09-21.
+
+    Resultado esperado: 2026-09-21 12:55.
+    Justificación: se resta la holgura total a la hora de cierre de la ventana.
+    """
     ventana = VentanaDespacho(
         inicio=datetime(2026, 9, 21, 6, 0),
         fin=datetime(2026, 9, 21, 16, 0),
@@ -61,17 +65,23 @@ def test_fecha_limite_ventana_ya_paso():
 
 
 def test_fecha_limite_acarreo_mayor_que_ventana():
-    """Caso 01c — el acarreo y el empaque no caben dentro de la ventana.
+    """T-09 02 — holgura que excede una ventana sintética.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
 
     Entradas:
-        ventana:  2026-09-21 06:00 a 08:00 (2 horas = 120 min de ancho)
-        empaque:  120 min, acarreo: 35 min, margen: 30 min (185 min de holgura requerida)
+        sintetico_ventana: 2026-09-21 06:00 a 08:00
+        sintetico_minutos_empaque: 120
+        sintetico_minutos_acarreo: 35
+        sintetico_margen_seguridad_min: 30
 
-    Cálculo a mano:
-        08:00 - 185 min = 04:55 del 2026-09-21, que cae ANTES del inicio (06:00).
-        La parcela no alcanza a despacharse en este periodo con estos tiempos.
+    Cálculo manual:
+        holgura = 120 + 35 + 30 = 185 minutos.
+        límite teórico = 08:00 - 185 minutos = 04:55.
+        04:55 es anterior al inicio de la ventana, 06:00.
 
     Resultado esperado: VentanaInalcanzable.
+    Justificación: la función rechaza un límite calculado anterior al inicio de la ventana.
     """
     ventana = VentanaDespacho(
         inicio=datetime(2026, 9, 21, 6, 0),

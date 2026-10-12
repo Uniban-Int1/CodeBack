@@ -30,17 +30,22 @@ def test_fecha_limite_sin_margen_seguridad():
 
 
 def test_fecha_limite_acepta_holgura_igual_a_ventana():
-    """Caso 04b — el borde exacto de una ventana de 600 minutos.
+    """T-09 03 — borde exacto de una ventana sintética.
+
+    Escenario sintético; estos valores no son datos históricos de Unibán.
 
     Entradas:
-        ventana: 2026-09-21 06:00 a 16:00 (600 min)
-        empaque: 300 min, acarreo: 200 min, margen: 100 min.
+        sintetico_ventana: 2026-09-21 06:00 a 16:00, ancho de 600 minutos
+        sintetico_minutos_empaque: 300
+        sintetico_minutos_acarreo: 200
+        sintetico_margen_seguridad_min: 100
 
-    Cálculo a mano:
-        holgura total = 300 + 200 + 100 = 600 min = 10 h.
-        16:00 - 10 h = 06:00 del 2026-09-21, exactamente el inicio de la ventana.
+    Cálculo manual:
+        holgura = 300 + 200 + 100 = 600 minutos = 10 horas.
+        límite = 16:00 - 10 horas = 06:00, exactamente el inicio de la ventana.
 
     Resultado esperado: 2026-09-21 06:00; no debe lanzar VentanaInalcanzable.
+    Justificación: se lanza la excepción solo si el límite es anterior al inicio; aquí son iguales.
     """
     ventana = VentanaDespacho(
         inicio=datetime(2026, 9, 21, 6, 0),
