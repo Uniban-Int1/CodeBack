@@ -1,5 +1,5 @@
 """Pruebas unitarias de la heurística de programación y sus restricciones."""
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -20,9 +20,13 @@ from app.core.programacion.restricciones import (
 
 
 def ventana_normal() -> VentanaDespacho:
+    """Construye una ventana sintética futura para evitar vencimientos por tiempo."""
+    inicio = datetime.now().replace(
+        hour=0, minute=0, second=0, microsecond=0
+    ) + timedelta(days=30)
     return VentanaDespacho(
-        inicio=datetime(2026, 10, 16, 6, 0),
-        fin=datetime(2026, 10, 16, 18, 0),
+        inicio=inicio.replace(hour=6),
+        fin=inicio.replace(hour=18),
     )
 
 
@@ -58,7 +62,34 @@ def test_programar_asigna_una_parcela_y_conserva_el_metodo():
     assert item.motivo is None
 
 
+def test_programar_asigna_carga_exacta_a_capacidad_del_vehiculo():
+    """Caso sintético; sus valores no son datos históricos de Unibán.
+
+    sintetico_volumen: 100 racimos; sintetico_capacidad_vehiculo: 100 racimos.
+    """
+    ventana = ventana_normal()
+    semana_iso = ventana.inicio.isocalendar()
+    periodo = f"{semana_iso.year}-W{semana_iso.week:02d}"
+    resultado = programar(
+        [parcela("P-100", 100)],
+        [Vehiculo("V1", 100)],
+        ventana,
+        periodo,
+        minutos_empaque=120,
+        margen_seguridad_min=30,
+    )
+
+    assert len(resultado.items) == 1
+    item = resultado.items[0]
+    assert item.parcela_id == "P-100"
+    assert item.vehiculo_id == "V1"
+    assert item.carga_estimada_racimos == 100
+    assert item.cumple_ventana is True
+    assert ventana.inicio <= item.fecha_corte <= ventana.fin
+
+
 def test_programar_prioriza_fecha_limite_y_desempata_por_parcela_id():
+    ventana = ventana_normal()
     resultado = programar(
         [
             parcela("P-003", 10, 120),
@@ -66,7 +97,7 @@ def test_programar_prioriza_fecha_limite_y_desempata_por_parcela_id():
             parcela("P-001", 10, 60),
         ],
         [Vehiculo("V1", 100)],
-        ventana_normal(),
+        ventana,
         "2026-W42",
         minutos_empaque=120,
         margen_seguridad_min=30,
@@ -79,21 +110,23 @@ def test_programar_prioriza_fecha_limite_y_desempata_por_parcela_id():
     ]
     assert [item.orden for item in resultado.items] == [1, 2, 3]
     assert [item.fecha_corte for item in resultado.items] == [
-        datetime(2026, 10, 16, 13, 30),
-        datetime(2026, 10, 16, 14, 30),
-        datetime(2026, 10, 16, 14, 30),
+        ventana.fin - timedelta(minutes=120 + 120 + 30),
+        ventana.fin - timedelta(minutes=120 + 60 + 30),
+        ventana.fin - timedelta(minutes=120 + 60 + 30),
     ]
 
 
 def test_programar_acumula_carga_y_asigna_vehiculos_sin_exceder_capacidad():
+    ventana = ventana_normal()
+    vehiculos = [Vehiculo("V2", 60), Vehiculo("V1", 100)]
     resultado = programar(
         [
             parcela("P-001", 50, 120),
             parcela("P-002", 60, 90),
             parcela("P-003", 30, 60),
         ],
-        [Vehiculo("V2", 60), Vehiculo("V1", 100)],
-        ventana_normal(),
+        vehiculos,
+        ventana,
         "2026-W42",
         minutos_empaque=120,
         margen_seguridad_min=30,
@@ -111,10 +144,21 @@ def test_programar_acumula_carga_y_asigna_vehiculos_sin_exceder_capacidad():
             for item in resultado.items
             if item.vehiculo_id == vehiculo.id
         )
-        for vehiculo in [Vehiculo("V1", 100), Vehiculo("V2", 60)]
+        for vehiculo in vehiculos
     }
     assert cargas == {"V1": 80, "V2": 60}
-    assert all(cargas[v.id] <= v.capacidad_racimos for v in [Vehiculo("V1", 100), Vehiculo("V2", 60)])
+    assert all(cargas[v.id] <= v.capacidad_racimos for v in vehiculos)
+
+    asignados = [item for item in resultado.items if item.vehiculo_id is not None]
+    no_programados = [item for item in resultado.items if item.vehiculo_id is None]
+    validos = [item for item in resultado.items if item.cumple_ventana]
+    assert all(item.cumple_ventana is False for item in no_programados)
+    assert all(item.vehiculo_id is not None for item in validos)
+    assert all(
+        ventana.inicio <= item.fecha_corte <= ventana.fin
+        for item in validos
+    )
+    assert len(asignados) == len(validos) == len(resultado.items)
 
 
 def test_programar_marca_no_programada_la_parcela_que_no_cabe_en_ningun_vehiculo():
