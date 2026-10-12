@@ -88,6 +88,44 @@ def test_programar_asigna_carga_exacta_a_capacidad_del_vehiculo():
     assert ventana.inicio <= item.fecha_corte <= ventana.fin
 
 
+def test_programar_repite_el_mismo_plan_con_entradas_sinteticas():
+    """Entradas sintéticas, no históricas de Unibán, producen el mismo plan."""
+    ventana_sintetica = ventana_normal()
+    parcelas_sinteticas = [
+        parcela("P-002", 30, 60),
+        parcela("P-001", 40, 120),
+    ]
+    vehiculos_sinteticos = [Vehiculo("V2", 50), Vehiculo("V1", 50)]
+    argumentos = {
+        "parcelas": parcelas_sinteticas,
+        "vehiculos": vehiculos_sinteticos,
+        "ventana": ventana_sintetica,
+        "periodo": f"{ventana_sintetica.inicio.isocalendar().year}-W"
+        f"{ventana_sintetica.inicio.isocalendar().week:02d}",
+        "minutos_empaque": 120,
+        "margen_seguridad_min": 30,
+    }
+
+    primer_plan = programar(**argumentos)
+    segundo_plan = programar(**argumentos)
+
+    def campos_items(plan):
+        return [
+            (
+                item.parcela_id,
+                item.orden,
+                item.vehiculo_id,
+                item.carga_estimada_racimos,
+                item.fecha_corte,
+                item.cumple_ventana,
+                item.motivo,
+            )
+            for item in plan.items
+        ]
+
+    assert campos_items(primer_plan) == campos_items(segundo_plan)
+
+
 def test_programar_prioriza_fecha_limite_y_desempata_por_parcela_id():
     ventana = ventana_normal()
     resultado = programar(
