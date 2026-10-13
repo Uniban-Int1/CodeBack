@@ -16,9 +16,11 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# TODO(T-11, T-12): registrar routers
-# from app.api import ingesta, planes, insumos
-# app.include_router(ingesta.router, prefix="/api/v1", tags=["ingesta"])
+from app.api import ingesta
+
+app.include_router(ingesta.router, prefix="/api/v1", tags=["ingesta"])
+# TODO(T-12): registrar planes e insumos
+# from app.api import planes, insumos
 # app.include_router(planes.router,  prefix="/api/v1", tags=["planes"])
 # app.include_router(insumos.router, prefix="/api/v1", tags=["insumos"])
 
