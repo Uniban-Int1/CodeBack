@@ -14,3 +14,5 @@ data/historico/
 .DS_Store
 .idea/
 .vscode/
+frontend/node_modules/
+frontend/.expo/
