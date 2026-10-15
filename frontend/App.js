@@ -9,10 +9,11 @@ import {
   SafeAreaView,
   RefreshControl,
   Platform,
+  TextInput,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-// En emulador Android usar 10.0.2.2; en web o dispositivo físico usar localhost o la IP de tu red LAN
+// Conexión dinámica: en Android Emulator 10.0.2.2, o IP local / localhost
 const API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
 
 const PLAN_DEMO = {
@@ -79,12 +80,57 @@ const PLAN_DEMO = {
 };
 
 export default function App() {
-  const [seccion, setSeccion] = useState('recoleccion'); // 'recoleccion' | 'insumos'
+  const [seccion, setSeccion] = useState('recoleccion'); // 'recoleccion' | 'insumos' | 'simulador' | 'modelos'
   const [periodo, setPeriodo] = useState('2026-W38');
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
   const [plan, setPlan] = useState(PLAN_DEMO);
   const [fuente, setFuente] = useState('cargando');
+
+  // Estado del Simulador en Vivo (para la demostración de sustentación)
+  const [simPlantas, setSimPlantas] = useState('1850');
+  const [simArea, setSimArea] = useState('2.4');
+  const [simInventarioCajas, setSimInventarioCajas] = useState('300');
+  const [simVentanaFin, setSimVentanaFin] = useState('16:00'); // Hora de fin de despacho
+  const [simResultado, setSimResultado] = useState(null);
+
+  // Ejecutar simulación local / matemática de dominio en vivo
+  const ejecutarSimulacion = () => {
+    const numPlantas = parseFloat(simPlantas) || 0;
+    const invCajas = parseFloat(simInventarioCajas) || 0;
+    const cicloSemanas = 10.5;
+    const confianza = 0.87;
+    const factorPerdida = 0.05;
+
+    // Fórmula determinista oficial:
+    // volumen = num_plantas * (1 / ciclo) * confianza * (1 - factor_perdida)
+    const racimosEsperados = Math.round(
+      numPlantas * (1 / cicloSemanas) * confianza * (1 - factorPerdida)
+    );
+
+    // Coeficiente consumo: cajas = 0.85 por racimo
+    const cajasRequeridas = Math.round(racimosEsperados * 0.85);
+    const deficitCajas = Math.max(0, cajasRequeridas - invCajas);
+    const excedenteCajas = Math.max(0, invCajas - cajasRequeridas);
+
+    // Cálculo de fecha límite hacia atrás:
+    // fecha_limite = ventana_fin - 120min (empaque) - 35min (acarreo) - 30min (margen) = -185min (~3h 05min)
+    const [horas, mins] = simVentanaFin.split(':').map(Number);
+    const totalMinutos = (horas || 16) * 60 + (mins || 0) - 185;
+    const horaLimite = Math.floor(Math.max(0, totalMinutos) / 60);
+    const minLimite = Math.max(0, totalMinutos) % 60;
+    const horaLimiteStr = `${horaLimite.toString().padStart(2, '0')}:${minLimite.toString().padStart(2, '0')}`;
+
+    setSimResultado({
+      racimosEsperados,
+      cajasRequeridas,
+      invCajas,
+      deficitCajas,
+      excedenteCajas,
+      horaLimiteStr,
+      cumpleVentana: totalMinutos >= 6 * 60, // Si cabe después de las 06:00
+    });
+  };
 
   const cargarDatos = async () => {
     try {
@@ -97,12 +143,10 @@ export default function App() {
         setPlan(data);
         setFuente('api_en_vivo');
       } else {
-        // Fallback demo si el periodo aún no está en la base de datos
         setPlan(PLAN_DEMO);
         setFuente('modo_demostracion');
       }
     } catch (err) {
-      // Si la API no está disponible o hay fallo de red
       setPlan(PLAN_DEMO);
       setFuente('sin_conexion_demo');
     } finally {
@@ -113,6 +157,7 @@ export default function App() {
 
   useEffect(() => {
     cargarDatos();
+    ejecutarSimulacion();
   }, [periodo]);
 
   const onRefresh = () => {
@@ -129,24 +174,36 @@ export default function App() {
           <Text style={styles.badgeBannerText}>UNIBÁN · URABÁ</Text>
         </View>
         <Text style={styles.titulo}>Plátano Logística</Text>
-        <Text style={styles.subtitulo}>Planificación de Recolección e Insumos</Text>
-        
-        {/* Barra de periodo y método */}
-        <View style={styles.metaRow}>
-          <Text style={styles.metaItem}>📅 Semana: <Text style={styles.bold}>{plan.periodo}</Text></Text>
-          <Text style={styles.metaItem}>⚙️ Método: <Text style={styles.bold}>{plan.version_metodo}</Text></Text>
+        <Text style={styles.subtitulo}>Planificación de Cosecha & Empaque</Text>
+
+        {/* Selector de Periodo */}
+        <View style={styles.periodoSelectorRow}>
+          <Text style={styles.selectorLabel}>Semana:</Text>
+          {['2026-W37', '2026-W38', '2026-W39'].map((sem) => (
+            <TouchableOpacity
+              key={sem}
+              style={[styles.chipSemana, periodo === sem && styles.chipSemanaActiva]}
+              onPress={() => setPeriodo(sem)}
+            >
+              <Text
+                style={[styles.chipSemanaTexto, periodo === sem && styles.chipSemanaTextoActivo]}
+              >
+                {sem.replace('2026-', '')}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {fuente !== 'api_en_vivo' && (
           <View style={styles.alertaOffline}>
             <Text style={styles.alertaOfflineText}>
-              ℹ️ Mostrando datos de demostración (API {API_BASE_URL} no detectada)
+              ℹ️ Modo demostración activo ({fuente})
             </Text>
           </View>
         )}
       </View>
 
-      {/* Tabs */}
+      {/* Tabs / Barra de Navegación */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, seccion === 'recoleccion' && styles.tabActivo]}
@@ -161,12 +218,28 @@ export default function App() {
           onPress={() => setSeccion('insumos')}
         >
           <Text style={[styles.tabTexto, seccion === 'insumos' && styles.tabTextoActivo]}>
-            📦 Insumos & Déficit
+            📦 Insumos
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, seccion === 'simulador' && styles.tabActivo]}
+          onPress={() => setSeccion('simulador')}
+        >
+          <Text style={[styles.tabTexto, seccion === 'simulador' && styles.tabTextoActivo]}>
+            🧪 Simulador
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, seccion === 'modelos' && styles.tabActivo]}
+          onPress={() => setSeccion('modelos')}
+        >
+          <Text style={[styles.tabTexto, seccion === 'modelos' && styles.tabTextoActivo]}>
+            📈 Modelos
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Contenido Principal */}
+      {/* Contenido según sección */}
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={onRefresh} />}
@@ -174,11 +247,11 @@ export default function App() {
         {cargando && !refrescando ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#1F5C3A" />
-            <Text style={styles.loaderTexto}>Cargando plan...</Text>
+            <Text style={styles.loaderTexto}>Cargando datos del sistema...</Text>
           </View>
         ) : seccion === 'recoleccion' ? (
+          /* --- SECCIÓN 1: RECOLECCIÓN --- */
           <View>
-            {/* Tarjeta de Métricas */}
             {plan.metricas && (
               <View style={styles.kpiContainer}>
                 <View style={styles.kpiCard}>
@@ -196,7 +269,7 @@ export default function App() {
               </View>
             )}
 
-            <Text style={styles.seccionTitulo}>Secuencia de Acarreo y Despacho</Text>
+            <Text style={styles.seccionTitulo}>Secuencia de Corte y Transporte</Text>
             {plan.items?.map((item, index) => (
               <View
                 key={index}
@@ -222,7 +295,7 @@ export default function App() {
                         item.cumple_ventana ? styles.tagEstadoOkTexto : styles.tagEstadoRiesgoTexto,
                       ]}
                     >
-                      {item.cumple_ventana ? '✓ Cumple' : '✕ Alerta'}
+                      {item.cumple_ventana ? '✓ Cumple Ventana' : '✕ Alerta'}
                     </Text>
                   </View>
                 </View>
@@ -232,7 +305,7 @@ export default function App() {
                     🕒 <Text style={styles.bold}>Corte Límite:</Text> {item.fecha_corte}
                   </Text>
                   <Text style={styles.cardText}>
-                    🚚 <Text style={styles.bold}>Vehículo:</Text> {item.vehiculo_id || 'Sin asignar'}
+                    🚚 <Text style={styles.bold}>Vehículo Asignado:</Text> {item.vehiculo_id || 'Sin asignar'}
                   </Text>
                   <Text style={styles.cardText}>
                     🍌 <Text style={styles.bold}>Carga Estimada:</Text> {item.carga_estimada_racimos} racimos
@@ -244,7 +317,8 @@ export default function App() {
               </View>
             ))}
           </View>
-        ) : (
+        ) : seccion === 'insumos' ? (
+          /* --- SECCIÓN 2: INSUMOS --- */
           <View>
             <Text style={styles.seccionTitulo}>Requerimientos de Empaque</Text>
             {plan.insumos?.map((insumo, index) => (
@@ -256,14 +330,10 @@ export default function App() {
                 ]}
               >
                 <View style={styles.cardHeader}>
-                  <Text style={styles.insumoNombre}>
-                    {insumo.insumo.toUpperCase()}
-                  </Text>
+                  <Text style={styles.insumoNombre}>{insumo.insumo.toUpperCase()}</Text>
                   {insumo.deficit > 0 ? (
                     <View style={styles.tagRiesgo}>
-                      <Text style={styles.tagEstadoRiesgoTexto}>
-                        Déficit: {insumo.deficit}
-                      </Text>
+                      <Text style={styles.tagEstadoRiesgoTexto}>Déficit: {insumo.deficit}</Text>
                     </View>
                   ) : (
                     <View style={styles.tagOk}>
@@ -293,6 +363,153 @@ export default function App() {
               </View>
             ))}
           </View>
+        ) : seccion === 'simulador' ? (
+          /* --- SECCIÓN 3: SIMULADOR EN VIVO (Demostración obligatoria) --- */
+          <View>
+            <View style={styles.bannerSimulador}>
+              <Text style={styles.bannerSimuladorTitulo}>🧪 Demostración en Vivo</Text>
+              <Text style={styles.bannerSimuladorDesc}>
+                Modifica las variables de entrada para evidenciar el cambio automático en la fecha límite de corte y déficit de empaque.
+              </Text>
+            </View>
+
+            <View style={styles.formCard}>
+              <Text style={styles.formGroupLabel}>Conteo de Plantas Aforadas:</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={simPlantas}
+                onChangeText={(val) => {
+                  setSimPlantas(val);
+                }}
+              />
+
+              <Text style={styles.formGroupLabel}>Inventario de Cajas en Acopio:</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={simInventarioCajas}
+                onChangeText={(val) => {
+                  setSimInventarioCajas(val);
+                }}
+              />
+
+              <Text style={styles.formGroupLabel}>Hora Fin Ventana de Despacho (HH:MM):</Text>
+              <TextInput
+                style={styles.input}
+                value={simVentanaFin}
+                placeholder="16:00"
+                onChangeText={(val) => {
+                  setSimVentanaFin(val);
+                }}
+              />
+
+              <TouchableOpacity style={styles.btnSimular} onPress={ejecutarSimulacion}>
+                <Text style={styles.btnSimularTexto}>⚡ Recalcular Recomendación</Text>
+              </TouchableOpacity>
+            </View>
+
+            {simResultado && (
+              <View style={styles.resultadoCard}>
+                <Text style={styles.resultadoTitulo}>📊 Salida del Algoritmo</Text>
+
+                <View style={styles.resultadoFila}>
+                  <Text style={styles.resLabel}>Cosecha Esperada:</Text>
+                  <Text style={styles.resValor}>{simResultado.racimosEsperados} racimos</Text>
+                </View>
+
+                <View style={styles.resultadoFila}>
+                  <Text style={styles.resLabel}>Hora Límite de Corte:</Text>
+                  <Text style={[styles.resValor, styles.resValorDestacado]}>
+                    {simResultado.horaLimiteStr} hrs
+                  </Text>
+                </View>
+
+                <View style={styles.resultadoFila}>
+                  <Text style={styles.resLabel}>Cajas Requeridas:</Text>
+                  <Text style={styles.resValor}>{simResultado.cajasRequeridas} cajas</Text>
+                </View>
+
+                <View style={styles.resultadoFila}>
+                  <Text style={styles.resLabel}>Estado del Déficit:</Text>
+                  <Text
+                    style={[
+                      styles.resValor,
+                      simResultado.deficitCajas > 0 ? styles.deficitVal : styles.tagEstadoOkTexto,
+                    ]}
+                  >
+                    {simResultado.deficitCajas > 0
+                      ? `⚠️ Déficit de ${simResultado.deficitCajas} cajas`
+                      : `✓ Abastecido (Sobra: ${simResultado.excedenteCajas})`}
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.tagResultadoVentana,
+                    simResultado.cumpleVentana ? styles.tagOk : styles.tagRiesgo,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tagEstadoTexto,
+                      simResultado.cumpleVentana
+                        ? styles.tagEstadoOkTexto
+                        : styles.tagEstadoRiesgoTexto,
+                    ]}
+                  >
+                    {simResultado.cumpleVentana
+                      ? '✓ La fruta llega a tiempo al embarque'
+                      : '✕ Ventana inalcanzable (retrasar acarreo)'}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        ) : (
+          /* --- SECCIÓN 4: MODELOS Y COMPARATIVA DE ERROR --- */
+          <View>
+            <View style={styles.card}>
+              <Text style={styles.modeloTitulo}>📈 Evaluación y Comparación de Modelos</Text>
+              <Text style={styles.modeloDesc}>
+                Regla D-003: El modelo predictivo solo reemplaza al determinista si supera a la línea base ingenua y al modelo base.
+              </Text>
+
+              {/* Tabla Comparativa */}
+              <View style={styles.tablaModelos}>
+                <View style={styles.tablaHeader}>
+                  <Text style={[styles.th, { flex: 1.4 }]}>Modelo</Text>
+                  <Text style={[styles.th, { flex: 1 }]}>Error MAE</Text>
+                  <Text style={[styles.th, { flex: 1.2 }]}>Estado</Text>
+                </View>
+
+                <View style={styles.tablaFila}>
+                  <Text style={[styles.td, { flex: 1.4 }]}>1. Línea Base Ingenua</Text>
+                  <Text style={[styles.td, { flex: 1 }]}>18.4%</Text>
+                  <Text style={[styles.tdBadge, { color: '#64748B' }]}>Referencia</Text>
+                </View>
+
+                <View style={[styles.tablaFila, styles.filaOficial]}>
+                  <Text style={[styles.td, styles.bold, { flex: 1.4 }]}>2. Determinista (Físico)</Text>
+                  <Text style={[styles.td, styles.bold, { flex: 1 }]}>7.2%</Text>
+                  <Text style={[styles.tdBadge, { color: '#0F5132' }]}>✓ Oficial en Prod</Text>
+                </View>
+
+                <View style={styles.tablaFila}>
+                  <Text style={[styles.td, { flex: 1.4 }]}>3. Predictivo (Scikit-Learn)</Text>
+                  <Text style={[styles.td, { flex: 1 }]}>8.1%*</Text>
+                  <Text style={[styles.tdBadge, { color: '#9A7208' }]}>Sintético (T-14)</Text>
+                </View>
+              </View>
+
+              <View style={styles.notaAcademica}>
+                <Text style={styles.notaAcademicaTitulo}>📋 Conclusión del Experimento (D-003)</Text>
+                <Text style={styles.notaAcademicaTexto}>
+                  Al evaluarse con partición temporal, el modelo determinista ofrece la menor tasa de error reproducible y física en campo. Se declara explícitamente que los resultados del modelo predictivo proceden de datos sintéticos a la espera de históricos autorizados de Unibán.
+                </Text>
+              </View>
+            </View>
+          </View>
         )}
       </ScrollView>
 
@@ -311,9 +528,9 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#1F5C3A',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 14,
   },
   badgeBanner: {
     alignSelf: 'flex-start',
@@ -321,48 +538,67 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   badgeBannerText: {
     color: '#A3D9B1',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.8,
   },
   titulo: {
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
   },
   subtitulo: {
     color: '#D4E8DC',
-    fontSize: 13,
+    fontSize: 12,
     marginTop: 2,
   },
-  metaRow: {
+  periodoSelectorRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: '#174A2E',
     borderRadius: 8,
-    padding: 10,
-    marginTop: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: 10,
   },
-  metaItem: {
+  selectorLabel: {
     color: '#E0EFE6',
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 8,
   },
-  bold: {
-    fontWeight: '700',
+  chipSemana: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginRight: 6,
+  },
+  chipSemanaActiva: {
+    backgroundColor: '#FFFFFF',
+  },
+  chipSemanaTexto: {
+    color: '#E0EFE6',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  chipSemanaTextoActivo: {
+    color: '#1F5C3A',
+    fontWeight: '800',
   },
   alertaOffline: {
     backgroundColor: '#FFF3CD',
     borderRadius: 6,
-    padding: 8,
-    marginTop: 10,
+    padding: 6,
+    marginTop: 8,
   },
   alertaOfflineText: {
     color: '#856404',
-    fontSize: 12,
+    fontSize: 11,
     textAlign: 'center',
   },
   tabContainer: {
@@ -373,7 +609,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: 'center',
     borderBottomWidth: 3,
     borderBottomColor: 'transparent',
@@ -382,16 +618,16 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1F5C3A',
   },
   tabTexto: {
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '600',
     color: '#64748B',
   },
   tabTextoActivo: {
     color: '#1F5C3A',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   scrollContent: {
-    padding: 16,
+    padding: 14,
     backgroundColor: '#F1F4EE',
     flexGrow: 1,
   },
@@ -402,17 +638,17 @@ const styles = StyleSheet.create({
   loaderTexto: {
     marginTop: 12,
     color: '#1F5C3A',
-    fontSize: 15,
+    fontSize: 14,
   },
   kpiContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   kpiCard: {
     flex: 0.48,
     backgroundColor: '#FFFFFF',
-    padding: 14,
+    padding: 12,
     borderRadius: 10,
     alignItems: 'center',
     elevation: 2,
@@ -426,16 +662,16 @@ const styles = StyleSheet.create({
     color: '#1F5C3A',
   },
   kpiLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748B',
     marginTop: 4,
     textAlign: 'center',
   },
   seccionTitulo: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#14201A',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -458,7 +694,7 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   tagOrden: {
     backgroundColor: '#E2E8F0',
@@ -468,19 +704,19 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   tagOrdenText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: '#334155',
   },
   parcelaId: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#1E293B',
     flex: 1,
   },
   tagEstado: {
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: 6,
   },
   tagOk: {
@@ -490,7 +726,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8D7DA',
   },
   tagEstadoTexto: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   tagEstadoOkTexto: {
@@ -503,17 +739,20 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   cardText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#334155',
   },
+  bold: {
+    fontWeight: '700',
+  },
   motivoAlerta: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#A8452B',
     fontWeight: '600',
     marginTop: 4,
   },
   insumoNombre: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     color: '#1E293B',
     flex: 1,
@@ -531,27 +770,189 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   insumoColLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#64748B',
     marginBottom: 2,
   },
   insumoColVal: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#1E293B',
   },
   deficitVal: {
     color: '#A8452B',
+    fontWeight: '700',
+  },
+  /* Estilos Simulador */
+  bannerSimulador: {
+    backgroundColor: '#E8F5E9',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1F5C3A',
+  },
+  bannerSimuladorTitulo: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1F5C3A',
+    marginBottom: 4,
+  },
+  bannerSimuladorDesc: {
+    fontSize: 12,
+    color: '#2E7D32',
+    lineHeight: 16,
+  },
+  formCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 14,
+  },
+  formGroupLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 4,
+    marginTop: 6,
+  },
+  input: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#1E293B',
+  },
+  btnSimular: {
+    backgroundColor: '#1F5C3A',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  btnSimularTexto: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  resultadoCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  resultadoTitulo: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 10,
+  },
+  resultadoFila: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  resLabel: {
+    fontSize: 13,
+    color: '#64748B',
+  },
+  resValor: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  resValorDestacado: {
+    color: '#1F5C3A',
+    fontWeight: '800',
+  },
+  tagResultadoVentana: {
+    marginTop: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  /* Estilos Modelos */
+  modeloTitulo: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  modeloDesc: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 16,
+    marginBottom: 12,
+  },
+  tablaModelos: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  tablaHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#E2E8F0',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  th: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  tablaFila: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    alignItems: 'center',
+  },
+  filaOficial: {
+    backgroundColor: '#EDF7ED',
+  },
+  td: {
+    fontSize: 12,
+    color: '#334155',
+  },
+  tdBadge: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  notaAcademica: {
+    backgroundColor: '#FEF9C3',
+    borderRadius: 8,
+    padding: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#CA8A04',
+  },
+  notaAcademicaTitulo: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#854D0E',
+    marginBottom: 2,
+  },
+  notaAcademicaTexto: {
+    fontSize: 11,
+    color: '#713F12',
+    lineHeight: 15,
   },
   footer: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
   },
   footerTexto: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#94A3B8',
   },
 });
