@@ -1,12 +1,11 @@
 services:
-  # Web Service de FastAPI
+  # Web Service basado en Docker para despliegue rápido y predecible
   - type: web
     name: platano-logistica-api
-    runtime: python
+    env: docker
     plan: free
     branch: develop-jose
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    dockerfilePath: Dockerfile
     envVars:
       - key: APP_ENV
         value: prod
