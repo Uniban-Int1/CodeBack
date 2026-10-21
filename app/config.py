@@ -24,7 +24,13 @@ class Settings(BaseSettings):
 
 @lru_cache
 def settings() -> Settings:
-    return Settings()
+    s = Settings()
+    # Si Render entrega postgres:// o postgresql:// sin driver explícito, normalizar a psycopg v3
+    if s.database_url.startswith("postgres://"):
+        s.database_url = s.database_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif s.database_url.startswith("postgresql://") and "+psycopg" not in s.database_url:
+        s.database_url = s.database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return s
 
 
 @lru_cache
