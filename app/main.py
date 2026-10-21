@@ -25,9 +25,10 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-from app.api import ingesta, insumos, planes, vistas
+from app.api import ingesta, insumos, planes, recomendacion, vistas
 
 app.include_router(vistas.router, tags=["vistas"])
+app.include_router(recomendacion.router, prefix="/api/v1", tags=["recomendacion"])
 app.include_router(ingesta.router, prefix="/api/v1", tags=["ingesta"])
 app.include_router(planes.router, prefix="/api/v1", tags=["planes"])
 app.include_router(insumos.router, prefix="/api/v1", tags=["insumos"])
