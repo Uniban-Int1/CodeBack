@@ -1,0 +1,25 @@
+services:
+  # Web Service de FastAPI
+  - type: web
+    name: platano-logistica-api
+    runtime: python
+    plan: free
+    branch: develop-jose
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: PARAMETROS_PATH
+        value: config/parametros.yaml
+      - key: DATABASE_URL
+        fromDatabase:
+          name: platano-db
+          property: connectionString
+
+databases:
+  # Base de datos PostgreSQL gratuita
+  - name: platano-db
+    plan: free
+    databaseName: platano
+    user: platano
