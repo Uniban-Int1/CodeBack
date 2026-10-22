@@ -1,7 +1,7 @@
 """Pruebas para el endpoint directo de recomendación de insumos y logística (T-11, T-12).
 
-Verifica que POST /api/v1/recomendar procese aforamiento, inventario y ventana
-y devuelva inmediatamente la recomendación sin intermediarios.
+Verifica que POST /api/v1/recomendar procese tanto el payload canónico
+como el payload anidado del Equipo 3 (parcel, aforamiento, inventory).
 """
 from fastapi.testclient import TestClient
 from app.main import app
@@ -10,7 +10,7 @@ client = TestClient(app)
 
 
 def test_recomendar_exitoso():
-    """POST /api/v1/recomendar debe retornar recomendación con status 200."""
+    """POST /api/v1/recomendar debe retornar recomendación con status 200 en formato directo."""
     payload = {
         "parcela_id": "P-018",
         "periodo": "2026-W38",
@@ -45,6 +45,77 @@ def test_recomendar_exitoso():
     assert data["metricas"]["cumplimiento_ventana"] == 1.0
 
 
+def test_recomendar_formato_equipo3_anidado():
+    """POST /api/v1/recomendar debe aceptar el payload real del Equipo 3 con defaults automáticos."""
+    payload_equipo3 = {
+        "producerId": "e3b0c442-98fc-1c14-9a41-000000000001",
+        "parcel": {
+            "id": "e3b0c442-98fc-1c14-9a41-000000000002",
+            "name": "La Esperanza",
+            "areaHa": 2.40,
+            "activeCycle": {
+                "id": "e3b0c442-98fc-1c14-9a41-000000000003",
+                "startDate": "2026-01-15",
+                "status": "PRODUCCION",
+            },
+        },
+        "aforamiento": {
+            "date": "2026-10-29",
+            "period": "2026-W44",
+            "estimatedPlants": 1850,
+            "confidence": 0.87,
+        },
+        "inventory": [
+            {
+                "supplyId": "uuid-1",
+                "name": "Cajas de Exportación",
+                "category": "Empaque",
+                "unit": "unidad",
+                "quantity": 100.0,
+            },
+            {
+                "supplyId": "uuid-2",
+                "name": "Urea 46%",
+                "category": "Fertilizante",
+                "unit": "kg",
+                "quantity": 82.5,
+            },
+        ],
+        "consumptions": [
+            {
+                "supplyId": "uuid-2",
+                "name": "Urea 46%",
+                "unit": "kg",
+                "quantity": 12.5,
+                "date": "2026-10-05",
+            }
+        ],
+        "losses": [
+            {
+                "supplyId": "uuid-2",
+                "name": "Urea 46%",
+                "unit": "kg",
+                "quantity": 2.0,
+                "date": "2026-10-10",
+                "reason": "CLIMA",
+            }
+        ],
+    }
+
+    response = client.post("/api/v1/recomendar", json=payload_equipo3)
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["parcela_id"] == "e3b0c442-98fc-1c14-9a41-000000000002"
+    assert data["periodo"] == "2026-W44"
+    assert data["volumen_racimos"] == 145.6
+    assert data["cumple_ventana"] is True
+    # Verificamos que cajas tenga el inventario de 100 que ellos mandaron
+    cajas_req = next(i for i in data["insumos"] if i["insumo"] == "cajas")
+    assert cajas_req["inventario_disponible"] == 100.0
+    assert cajas_req["deficit"] > 0  # Requerido ~123.8 - 100 = 23.8 déficit
+
+
 def test_recomendar_deficit_cajas():
     """Si el inventario es bajo, el déficit debe reflejarse en los insumos."""
     payload = {
@@ -58,7 +129,7 @@ def test_recomendar_deficit_cajas():
             "fin": "2026-09-21T16:00:00",
         },
         "inventario": {
-            "cajas": 50.0,  # Menor que lo requerido (~123.8)
+            "cajas": 50.0,
             "carton": 400.0,
             "bolsas": 350.0,
         },
