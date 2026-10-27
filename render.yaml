@@ -4,7 +4,7 @@ services:
     name: platano-logistica-api
     env: docker
     plan: free
-    branch: develop-jose
+    branch: main
     dockerfilePath: Dockerfile
     envVars:
       - key: APP_ENV
