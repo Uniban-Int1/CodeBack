@@ -46,7 +46,8 @@ def test_recomendar_exitoso():
 
 
 def test_recomendar_formato_equipo3_anidado():
-    """POST /api/v1/recomendar debe aceptar el payload real del Equipo 3 con defaults automáticos."""
+    """POST /api/v1/recomendar debe aceptar el payload del Equipo 3 cuando trae
+    todos los datos obligatorios (incluida ventana_despacho)."""
     payload_equipo3 = {
         "producerId": "e3b0c442-98fc-1c14-9a41-000000000001",
         "parcel": {
@@ -100,6 +101,10 @@ def test_recomendar_formato_equipo3_anidado():
                 "reason": "CLIMA",
             }
         ],
+        "ventana_despacho": {
+            "inicio": "2026-10-29T06:00:00",
+            "fin": "2026-10-29T16:00:00",
+        },
     }
 
     response = client.post("/api/v1/recomendar", json=payload_equipo3)
@@ -116,10 +121,54 @@ def test_recomendar_formato_equipo3_anidado():
     assert cajas_req["deficit"] > 0  # Requerido ~123.8 - 100 = 23.8 déficit
 
 
+def test_recomendar_formato_equipo3_sin_ventana_falla_con_error_claro():
+    """Regla 4 del contrato: si el Equipo 3 no envía ventana_despacho, el servicio
+    debe reportarlo (422 con el nombre del campo), no inventar un horario fijo.
+
+    Este es el payload real que envió el Equipo 3 en su propuesta de integración
+    (sin ventana_despacho ni tiempo_acarreo_min)."""
+    payload_equipo3_real = {
+        "producerId": "33333333-3333-4333-8333-333333333333",
+        "parcel": {"id": "11111111-1111-4111-8111-111111111111", "name": "La Esperanza", "areaHa": 2.4},
+        "aforamiento": {
+            "date": "2026-10-29",
+            "period": "2026-W44",
+            "estimatedPlants": 1850,
+            "confidence": 0.87,
+        },
+        "inventory": [
+            {"name": "cajas", "unit": "unidad", "quantity": 80},
+            {"name": "carton", "unit": "unidad", "quantity": 120},
+            {"name": "bolsas", "unit": "unidad", "quantity": 200},
+        ],
+    }
+
+    response = client.post("/api/v1/recomendar", json=payload_equipo3_real)
+    assert response.status_code == 422
+    assert "ventana_despacho" in response.text
+
+
+def test_recomendar_sin_datos_obligatorios_lista_todo_lo_que_falta():
+    """Un payload vacío debe reportar TODOS los campos obligatorios ausentes, no solo el primero."""
+    response = client.post("/api/v1/recomendar", json={})
+    assert response.status_code == 422
+    detalle = response.text
+    for campo in (
+        "parcela_id",
+        "periodo",
+        "num_plantas_estimado",
+        "calidad_confianza",
+        "inventario",
+        "ventana_despacho",
+    ):
+        assert campo in detalle
+
+
 def test_recomendar_deficit_cajas():
     """Si el inventario es bajo, el déficit debe reflejarse en los insumos."""
     payload = {
         "parcela_id": "P-018",
+        "periodo": "2026-W38",
         "num_plantas_estimado": 1850,
         "calidad_confianza": 0.87,
         "area_ha": 2.4,

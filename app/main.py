@@ -25,13 +25,28 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+from fastapi import Depends
+
 from app.api import ingesta, insumos, planes, recomendacion, vistas
+from app.core.seguridad import verificar_token_integracion
+
+# D-010/D-018: la verificación de token solo bloquea si INTEGRACION_TOKEN está configurado
+# en el entorno. Se aplica a los endpoints de integración entre servicios, no a las vistas.
+_dep_integracion = [Depends(verificar_token_integracion)]
 
 app.include_router(vistas.router, tags=["vistas"])
-app.include_router(recomendacion.router, prefix="/api/v1", tags=["recomendacion"])
-app.include_router(ingesta.router, prefix="/api/v1", tags=["ingesta"])
-app.include_router(planes.router, prefix="/api/v1", tags=["planes"])
-app.include_router(insumos.router, prefix="/api/v1", tags=["insumos"])
+app.include_router(
+    recomendacion.router, prefix="/api/v1", tags=["recomendacion"], dependencies=_dep_integracion
+)
+app.include_router(
+    ingesta.router, prefix="/api/v1", tags=["ingesta"], dependencies=_dep_integracion
+)
+app.include_router(
+    planes.router, prefix="/api/v1", tags=["planes"], dependencies=_dep_integracion
+)
+app.include_router(
+    insumos.router, prefix="/api/v1", tags=["insumos"], dependencies=_dep_integracion
+)
 
 
 @app.get("/salud", tags=["sistema"])

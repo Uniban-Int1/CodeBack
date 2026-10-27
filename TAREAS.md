@@ -177,11 +177,13 @@ Reunirse con los equipos 1 y 3 y cerrar por escrito qué campos, en qué formato
 
 *Hecho cuando:* los tres equipos tienen el mismo documento y cada uno puede leer un archivo de muestra del otro.
 
-> El borrador ya está escrito y los cinco puntos pendientes ya tienen una propuesta provisional
-> (D-007 a D-011 en `DECISIONES.md`), para no bloquear T-02 y T-06. Falta la confirmación real
-> con los equipos 1 y 3 en sesión de seguimiento — sin eso, el contrato sigue siendo "v1 propuesta",
-> no un acuerdo cerrado. El más peligroso sigue siendo el formato del `parcela_id`: si los equipos
-> 1 y 3 no confirman `P-NNN`, la semana 12 se convierte en un problema.
+> El borrador ya está escrito. El formato de `parcela_id` ya se cerró en la integración real con
+> el Equipo 3 (D-016: se adopta su identificador, un UUID, en vez de exigir `P-NNN` como
+> proponía D-007). Los otros cuatro puntos (D-008 a D-011) siguen con propuesta provisional,
+> pendientes de confirmación con los equipos 1 y 3 en sesión de seguimiento — sin eso, el
+> contrato sigue siendo "v1 propuesta", no un acuerdo cerrado. El riesgo que queda sobre
+> `parcela_id` ya no es el formato, es confirmar que el Equipo 1 usa el mismo valor que el
+> Equipo 3 para la misma parcela.
 
 ---
 
