@@ -1,9 +1,11 @@
 # Contrato de integración — v1
 
 > **Estado:** v1 — PROPUESTA. Los 5 puntos de la sección final se resolvieron con una decisión
-> provisional para no bloquear T-02 y T-06 (ver DECISIONES.md D-007 a D-011). Cada una queda marcada
-> como propuesta y debe confirmarse con los equipos 1 y 3 en sesión de seguimiento antes de la
-> prueba de integración de la semana 12. Si algún equipo la objeta, se revisa y sube a v2.
+> provisional para no bloquear T-02 y T-06 (ver DECISIONES.md D-008 a D-011). El formato de
+> `parcela_id` ya se confirmó en la integración real (D-016: identificador del sistema de
+> origen, UUID — ya no `P-NNN`). Las demás propuestas siguen marcadas como tales hasta
+> confirmarse con los equipos 1 y 3 en sesión de seguimiento antes de la prueba de integración
+> de la semana 12. Si algún equipo la objeta, se revisa y sube a v2.
 > **Responsable de publicar y versionar:** Equipo 2.
 > Los cambios se acuerdan en sesión de seguimiento y se numeran v1, v2…
 
@@ -18,7 +20,7 @@ del proyecto Plátano–Unibán.
 
 | Campo | Tipo | Obligatorio | Notas |
 |---|---|---|---|
-| `parcela_id` | string | sí | identificador acordado entre los tres equipos |
+| `parcela_id` | string (UUID) | sí | identificador que ya genera el sistema de origen — ver D-016 |
 | `fecha` | date | sí | fecha del aforamiento |
 | `area_ha` | float | sí | superficie de la parcela |
 | `num_plantas_estimado` | int | sí | resultado del conteo |
@@ -26,7 +28,7 @@ del proyecto Plátano–Unibán.
 
 ```json
 {
-  "parcela_id": "P-018",
+  "parcela_id": "11111111-1111-4111-8111-111111111111",
   "fecha": "2026-09-14",
   "area_ha": 2.4,
   "num_plantas_estimado": 1850,
@@ -56,7 +58,7 @@ Alternativa aceptada: archivo CSV versionado con las mismas columnas.
 
 ```json
 {
-  "parcela_id": "P-018",
+  "parcela_id": "11111111-1111-4111-8111-111111111111",
   "acopio_id": "AC-02",
   "tiempo_acarreo_min": 35,
   "medio_acarreo": "cable_via",
@@ -87,7 +89,7 @@ evidencia de un extracto real de Unibán.
   "generado_en": "2026-09-17T09:12:00",
   "items": [
     {
-      "parcela_id": "P-018",
+      "parcela_id": "11111111-1111-4111-8111-111111111111",
       "fecha_corte": "2026-09-20",
       "vehiculo_id": "V-3",
       "orden": 2,
@@ -133,9 +135,11 @@ evidencia de un extracto real de Unibán.
 Cada punto tiene ahora una **propuesta provisional** (ver DECISIONES.md). Siguen abiertos hasta
 que los equipos 1 y 3 los confirmen o los objeten en sesión de seguimiento.
 
-- [x] **Formato exacto del `parcela_id`** — propuesta: `P-NNN` (prefijo `P-`, tres dígitos,
-  consecutivo asignado por el Equipo 1 en el aforamiento inicial de la parcela). Es el campo más
-  peligroso: si un equipo lo genera distinto, la semana 12 se rompe. Ver D-007.
+- [x] **Formato exacto del `parcela_id`** — CERRADO (D-016): se adopta el identificador que ya
+  genera el sistema de origen (Equipo 1 o Equipo 3), en la práctica un UUID. Ya no se exige
+  `P-NNN` (D-007, superada). Lo que sigue abierto no es el formato, sino confirmar que el
+  Equipo 1 y el Equipo 3 usan el mismo valor para la misma parcela — ese es el riesgo real para
+  la semana 12.
 - [x] **Fuente de verdad del inventario** — propuesta: el Equipo 3 es la única fuente de verdad;
   nosotros solo leemos y nunca escribimos inventario, para no tener dos sistemas afirmando el
   mismo dato. Ver D-008.

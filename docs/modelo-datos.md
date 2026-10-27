@@ -1,8 +1,10 @@
 # Modelo de datos
 
 > **Estado:** implementado en `app/models/entidades.py` y `migrations/versions/1c9c07620028_esquema_inicial.py`.
-> El esquema sigue siendo revisable con los equipos 1 y 3 — en particular el tipo y formato de
-> `parcela_id` (ver D-007) — pero ya no es solo diagrama: `alembic upgrade head` lo crea completo.
+> `parcela_id` se definió como `String(50)` desde el inicio sin exigir un formato propio, así
+> que el identificador real (UUID, ver D-016) cabe sin migración adicional. El esquema sigue
+> siendo revisable con los equipos 1 y 3, pero ya no es solo diagrama: `alembic upgrade head` lo
+> crea completo.
 > Responsable: David — frente front y plataforma (T-02)
 
 ## Diagrama

@@ -25,7 +25,7 @@ que una variable esté ausente del histórico.
 
 | Variable | Fuente responsable | Tipo indicado en contrato/documentación | Unidad | Estado según contrato | Verificación en datos reales | Cobertura temporal |
 |---|---|---|---|---|---|---|
-| `parcela_id` | Equipo 1 / Equipo 3 | string | No aplica | Presente como requerido en el contrato; formato `P-NNN` es propuesta D-007 | Pendiente | No aplica; disponibilidad del identificador real pendiente |
+| `parcela_id` | Equipo 1 / Equipo 3 | string (UUID) | No aplica | Presente como requerido en el contrato; formato cerrado en D-016 (identificador del sistema de origen, ya no `P-NNN`) | Confirmado vía integración real con Equipo 3 (UUID) | Pendiente confirmar que Equipo 1 usa el mismo valor que Equipo 3 para la misma parcela |
 | `fecha` de aforamiento | Equipo 1 | date | Fecha calendario | Presente como requerido en el contrato | Pendiente | Por aforamiento según contrato; serie histórica y rango de fechas pendientes |
 | `area_ha` | Equipo 1 | float | hectáreas (`ha`) | Presente como requerido en el contrato | Pendiente | Por aforamiento según contrato; rango histórico pendiente |
 | `num_plantas_estimado` | Equipo 1 | int | plantas | Presente como requerido en el contrato | Pendiente | Por aforamiento según contrato; frecuencia y rango histórico pendientes |

@@ -93,17 +93,17 @@ de prueba, no el alcance.
 ---
 
 ## D-007 · Formato del `parcela_id`: `P-NNN`
-**Fecha:** septiembre de 2026 · **Decidió:** el equipo (propuesta) · **Estado:** propuesta — pendiente de validar con equipos 1 y 3
+**Fecha:** septiembre de 2026 · **Decidió:** el equipo (propuesta) · **Estado:** superada por D-016
 
 Prefijo `P-` seguido de tres dígitos consecutivos, asignado por el Equipo 1 al registrar el
 aforamiento inicial de una parcela.
 
-**Por qué:** es el campo que más riesgo tiene según T-01: si cada equipo lo genera con una
-convención distinta, la prueba de integración de la semana 12 se convierte en un problema de
-reconciliación de identificadores en vez de una prueba del sistema.
+**Por qué (en su momento):** es el campo que más riesgo tiene según T-01: si cada equipo lo
+genera con una convención distinta, la prueba de integración de la semana 12 se convierte en un
+problema de reconciliación de identificadores en vez de una prueba del sistema.
 
-**Consecuencia:** hasta que el Equipo 1 lo confirme, es solo una propuesta razonable, no un
-acuerdo cerrado.
+**Qué pasó:** en la integración real, el Equipo 3 identifica cada parcela con un UUID generado
+por su propio sistema, no con `P-NNN`. Ver D-016.
 
 ---
 
@@ -228,6 +228,73 @@ resultar muy grande cuando el observado es pequeño. T-18 solicita medir el erro
 D-004 establece que los coeficientes de consumo son configurables y D-013 hace explícito el
 excedente de insumos, pero ninguna define esta métrica. La fórmula aprobada evalúa cantidad
 requerida frente a consumo observado y no reemplaza la medición de déficit o excedente.
+
+---
+
+## D-016 · `parcela_id` es el identificador del sistema de origen, no un formato propio (reemplaza D-007)
+**Fecha:** octubre de 2026 · **Decidió:** el equipo · **Estado:** vigente
+
+`parcela_id` se acepta como el identificador que ya genera el Equipo 1 o el Equipo 3 al
+registrar la parcela — en la práctica, un UUID. Dejamos de exigir el formato `P-NNN` propuesto
+en D-007.
+
+**Se descartó:** pedirle a los equipos 1 y 3 que adoptaran el prefijo `P-NNN`.
+
+**Por qué:** nosotros no generamos `parcela_id`, solo lo recibimos. El código ya lo trata como
+un `string` libre en todos los puntos (modelo de datos, esquemas Pydantic de ingesta/planes/
+recomendación, endpoints) — ninguno de ellos valida el formato `P-NNN`, así que no había ningún
+costo real en mantenerlo como requisito. Exigirles un formato propio a los equipos 1 y 3 les
+genera trabajo de mapeo sin beneficio: es más barato para los seis subproyectos que todos usen
+el identificador que ya existe en el sistema de origen.
+
+**Consecuencia:** se actualizan los ejemplos de `docs/contrato-integracion.md`,
+`docs/modelo-datos.md`, `docs/inventario-variables.md` y `CONTEXT.md` para mostrar un UUID en
+lugar de `P-018`. Pendiente: confirmar con el Equipo 1 que el `parcela_id` que registra en el
+aforamiento es el mismo valor que usa el Equipo 3, para que los tres equipos refieran la misma
+parcela con el mismo identificador — ese es el riesgo real que D-007 señalaba, y sigue vigente
+independientemente del formato.
+
+---
+
+## D-017 · El endpoint /recomendar ya no inventa valores por defecto cuando falta un dato obligatorio
+**Fecha:** octubre de 2026 · **Decidió:** el equipo · **Estado:** vigente
+
+`SolicitudRecomendacion` (`app/schemas/recomendacion.py`) dejó de rellenar en silencio
+`periodo`, `num_plantas_estimado`, `calidad_confianza`, `inventario` y `ventana_despacho`
+cuando el Equipo 3 no los envía. Ahora responde `422` con la lista de los campos faltantes.
+
+**Se descartó:** mantener los defaults automáticos (periodo `"2026-W38"`, 1850 plantas,
+inventario fijo, ventana `06:00-16:00` de una fecha fija) que traía la implementación anterior.
+
+**Por qué:** violaba la regla 4 del contrato de integración ("si falta un dato de entrada, el
+sistema responde qué falta, no se cae ni inventa el valor"). Generar una recomendación con
+datos ficticios sin que ningún equipo se entere es peor que rechazar la solicitud con un mensaje
+claro — sobre todo porque la fecha límite de corte y el requerimiento de insumos dependían
+directamente de esos valores inventados.
+
+**Consecuencia:** las solicitudes del Equipo 3 que no incluyan `ventana_despacho` (su payload
+real de hoy no la trae) van a empezar a fallar con `422` en cuanto se despliegue este cambio.
+Se les avisa antes de desplegar, para coordinar el momento. El único default que se conserva es
+`tiempo_acarreo_min` (cable vía estándar, 35 min) porque no afecta la queja original y no es un
+dato que cambie el resultado de forma tan crítica como los demás.
+
+---
+
+## D-018 · Autenticación entre servicios activable sin romper la integración en curso
+**Fecha:** octubre de 2026 · **Decidió:** el equipo · **Estado:** vigente — implementa D-010
+
+Se agrega `app/core/seguridad.py` con una verificación de token (`Authorization: Bearer
+<INTEGRACION_TOKEN>`), pero la verificación solo se activa si la variable de entorno
+`INTEGRACION_TOKEN` está configurada en el entorno de despliegue.
+
+**Por qué:** D-010 ya había decidido que debía existir autenticación, pero activarla de golpe
+en el servicio que el Equipo 3 ya está consumiendo en producción cortaría su integración sin
+aviso. Con la verificación apagada por defecto, el código queda listo para activarse el día que
+se coordine con los equipos 1 y 3, sin otro despliegue de por medio.
+
+**Consecuencia:** mientras `INTEGRACION_TOKEN` no esté configurado en Render, el endpoint sigue
+aceptando peticiones sin autenticación — igual que hoy. Activar la variable es, a propósito, una
+decisión operativa separada de este cambio de código.
 
 ---
 
