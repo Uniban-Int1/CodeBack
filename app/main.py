@@ -4,7 +4,6 @@ Responsable: José Miguel — frente front y plataforma (T-11, T-12)
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(
     title="Logística de recolección, transporte e insumos — Plátano/Unibán",
@@ -23,18 +22,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
 from fastapi import Depends
 
-from app.api import ingesta, insumos, planes, recomendacion, vistas
+from app.api import ingesta, insumos, planes, recomendacion
 from app.core.seguridad import verificar_token_integracion
 
 # D-010/D-018: la verificación de token solo bloquea si INTEGRACION_TOKEN está configurado
-# en el entorno. Se aplica a los endpoints de integración entre servicios, no a las vistas.
+# en el entorno. Se aplica a los endpoints de integración entre servicios.
 _dep_integracion = [Depends(verificar_token_integracion)]
 
-app.include_router(vistas.router, tags=["vistas"])
 app.include_router(
     recomendacion.router, prefix="/api/v1", tags=["recomendacion"], dependencies=_dep_integracion
 )

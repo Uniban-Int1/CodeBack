@@ -21,7 +21,7 @@ Plátano – Unibán · Equipo 2 de 3
 | Frente | Pareja | Área |
 |---|---|---|
 | **Backend — lógica de dominio** | Camilo Mosquera · Lizbeth Espinosa | Proyección de cosecha, motor de programación, insumos, evaluación |
-| **Front y plataforma** | David Arango Pineda · José Miguel Correa Sánchez | Datos y migraciones, API REST, contrato, integración, vistas Jinja2, Docker |
+| **Front y plataforma** | David Arango Pineda · José Miguel Correa Sánchez | Datos y migraciones, API REST, contrato, integración, app móvil, Docker |
 
 Detalle por persona y tarea en [`TAREAS.md`](TAREAS.md).
 
@@ -48,8 +48,8 @@ cp .env.example .env
 docker compose up --build
 ```
 
-La aplicación queda en http://localhost:8000
-La documentación interactiva de la API, en http://localhost:8000/docs
+La API queda en http://localhost:8000 (sin vista web — ver "App móvil" más abajo).
+La documentación interactiva, en http://localhost:8000/docs
 
 ### Migraciones
 
@@ -83,9 +83,9 @@ uvicorn app.main:app --reload
 
 ## App móvil (frontend)
 
-`frontend/` es una app Expo/React Native independiente que consume la API anterior.
-No está en el mismo despliegue que el backend — ver `DECISIONES.md` D-001 para el
-estado actual de esa decisión (contradice lo decidido originalmente sobre Jinja2).
+`frontend/` es el frontend oficial del proyecto: una app Expo/React Native que consume
+la API anterior (ver `DECISIONES.md` D-020). No está en el mismo despliegue que el
+backend — corre localmente con Expo o se instala vía EAS, no en Render.
 
 ```bash
 cd frontend
@@ -118,18 +118,15 @@ CodeBack/
 │  │  ├─ ingesta.py            #   recibe de equipos 1 y 3
 │  │  ├─ planes.py             #   consulta del plan
 │  │  ├─ insumos.py            #   consulta de insumos
-│  │  ├─ recomendacion.py      #   POST /api/v1/recomendar (Equipo 3, en vivo)
-│  │  └─ vistas.py             #   vistas Jinja2
+│  │  └─ recomendacion.py      #   POST /api/v1/recomendar (Equipo 3, en vivo)
 │  ├─ core/
 │  │  ├─ proyeccion/           # cosecha esperada: base.py (determinista), predictivo.py, metricas.py
 │  │  ├─ programacion/         # EL NÚCLEO: fechas.py, restricciones.py, heuristica.py
 │  │  ├─ insumos/              # derivados del plan: estimacion.py, metricas.py
 │  │  ├─ servicio.py           # orquesta proyección + programación + insumos
 │  │  └─ seguridad.py          # verificación de token entre servicios (D-010/D-018)
-│  ├─ integracion/             # clientes equipos 1 y 3
-│  ├─ templates/                # vistas Jinja2 (reporte de apoyo a decisión)
-│  └─ static/
-├─ frontend/                   # app móvil Expo/React Native — ver D-001 (contradice la decisión original)
+│  └─ integracion/             # clientes equipos 1 y 3
+├─ frontend/                   # app móvil Expo/React Native — único frontend (D-020)
 ├─ config/parametros.yaml      # tiempos, capacidades, coeficientes (NO en el código)
 ├─ data/                       # muestras y procedencia (pendiente de llenar, ver data/README.md)
 ├─ docs/                       # contrato, modelo de datos, inventario de variables, reporte de evaluación
@@ -154,9 +151,9 @@ CodeBack/
 
 ## Stack
 
-**Backend:** Python · FastAPI · PostgreSQL · SQLAlchemy · Alembic · Jinja2 · pandas ·
+**Backend:** Python · FastAPI · PostgreSQL · SQLAlchemy · Alembic · pandas ·
 scikit-learn · pytest · Docker · Render (despliegue)
 
-**App móvil:** Expo · React Native (ver `DECISIONES.md` D-001 — estado en revisión)
+**App móvil:** Expo · React Native — único frontend del proyecto (ver `DECISIONES.md` D-020)
 
 Todas con licencias libres. El presupuesto de software del anteproyecto es $0 (planes free de Render).

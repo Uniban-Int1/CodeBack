@@ -9,9 +9,9 @@ Una decisión revertida no se borra: se marca como superada y se enlaza la que l
 ---
 
 ## D-001 · Frontend en Jinja2, no React
-**Fecha:** septiembre de 2026 · **Decidió:** el equipo · **Estado:** EN REVISIÓN — contradicha por el código actual
+**Fecha:** septiembre de 2026 · **Decidió:** el equipo · **Estado:** SUPERADA por D-020
 
-Las plantillas Jinja2 viven dentro del mismo servicio FastAPI.
+Las plantillas Jinja2 vivían dentro del mismo servicio FastAPI.
 
 **Se descartó (en su momento):** React como proyecto separado.
 
@@ -20,17 +20,30 @@ consumo de la API — un sistema adicional que mantener en las tres semanas asig
 El entregable es un reporte de apoyo a decisión, no una aplicación interactiva; la guía pide "una
 vista o reporte". Con Jinja2 no hay nada que compilar y el despliegue es uno solo.
 
-**Si se necesitan gráficas:** Chart.js por CDN sobre las mismas plantillas, sin cambiar la arquitectura.
+**Qué pasó:** el equipo terminó construyendo una app Expo/React Native completa (`frontend/`)
+para la demo con el profesor. Ver D-020: se adopta React Native como el único frontend, y esta
+decisión queda superada.
 
-**⚠️ Contradicción detectada (octubre de 2026):** el repositorio ya contiene `frontend/`, una app
-Expo/React Native completa (`App.js`, 958 líneas, con `package.json`, `app.json`, `eas.json`).
-Las plantillas Jinja2 (`app/templates/`) también siguen existiendo y en uso (`app/api/vistas.py`).
-No queda registro en este archivo de quién decidió agregar React Native ni por qué se dejó de
-respetar esta decisión. **El equipo necesita decidir explícitamente uno de dos caminos:**
-mantener ambos frontends con un propósito distinto cada uno (Jinja2 como reporte de apoyo a
-decisión, React Native como demo interactiva), o declarar esta decisión superada y documentar
-por qué. Mientras no se resuelva, hay una contradicción visible entre este documento y el código
-para cualquiera que revise el repositorio — incluido el profesor.
+---
+
+## D-020 · React Native es el único frontend; se retira Jinja2
+**Fecha:** octubre de 2026 · **Decidió:** el equipo · **Estado:** vigente — reemplaza D-001
+
+La app móvil en `frontend/` (Expo/React Native) es el frontend oficial del proyecto. Las
+plantillas Jinja2 (`app/templates/`, servidas por `app/api/vistas.py`) se retiran.
+
+**Se descartó:** mantener los dos frontends en paralelo (opción que se había planteado al
+detectar la contradicción con D-001).
+
+**Por qué:** mantener ambos significa documentar y probar dos interfaces para el mismo backend
+sin que ninguna reemplace a la otra — más superficie que mantener sin beneficio claro para lo
+que falta del semestre. El equipo prefiere una sola interfaz de demo, la que ya está más
+desarrollada y es la que se usará en la sustentación.
+
+**Consecuencia:** hay que retirar del código lo que ya no aplica — `app/templates/`,
+`app/api/vistas.py`, su registro en `app/main.py`, y `tests/test_vistas.py` — y ajustar
+`README.md` en consecuencia. Eso es un cambio de código aparte, no solo de documentación;
+se hace en un commit propio para poder revisarlo y revertirlo si algo lo necesita.
 
 ---
 
