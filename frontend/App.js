@@ -8,13 +8,13 @@ import {
   ActivityIndicator,
   SafeAreaView,
   RefreshControl,
-  Platform,
   TextInput,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-// Conexión dinámica: en Android Emulator 10.0.2.2, o IP local / localhost
-const API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+// Backend desplegado en Render (plan free: la primera llamada tras inactividad
+// puede tardar ~90 s en responder mientras el servicio despierta).
+const API_BASE_URL = 'https://platano-logistica-api.onrender.com';
 
 const PLAN_DEMO = {
   plan_id: "PL-2026-W38",
