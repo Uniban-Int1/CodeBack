@@ -109,6 +109,7 @@ def generar_recomendacion(
             cantidad_requerida=r.cantidad_requerida,
             inventario_disponible=r.inventario_disponible,
             deficit=r.deficit,
+            excedente=r.excedente,
         )
         for r in rec.requerimientos
     ]

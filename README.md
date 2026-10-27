@@ -27,13 +27,23 @@ Detalle por persona y tarea en [`TAREAS.md`](TAREAS.md).
 
 ---
 
-## Cómo levantarlo
+## Backend desplegado
+
+El backend ya está en producción en Render (plan free, se duerme tras inactividad —
+la primera llamada después de un rato puede tardar ~90 s en responder):
+
+- API: https://platano-logistica-api.onrender.com
+- Documentación interactiva (Swagger): https://platano-logistica-api.onrender.com/docs
+
+Se despliega automáticamente desde `main` (ver `render.yaml`).
+
+## Cómo levantarlo en local
 
 Requisitos: Docker y Docker Compose.
 
 ```bash
 git clone <url-del-repo>
-cd platano-logistica
+cd CodeBack
 cp .env.example .env
 docker compose up --build
 ```
@@ -47,18 +57,15 @@ La documentación interactiva de la API, en http://localhost:8000/docs
 docker compose exec app alembic upgrade head
 ```
 
-### Datos de muestra
-
-```bash
-docker compose exec app python -m app.seed
-```
-
 ### Pruebas
 
 ```bash
 docker compose exec app pytest
 docker compose exec app pytest tests/casos -v   # casos de cálculo verificados a mano
 ```
+
+No hay todavía un script de datos de muestra (`app/seed` no existe); los casos de
+prueba en `tests/casos/` construyen sus propios datos sintéticos inline.
 
 ---
 
@@ -74,38 +81,61 @@ uvicorn app.main:app --reload
 
 ---
 
+## App móvil (frontend)
+
+`frontend/` es una app Expo/React Native independiente que consume la API anterior.
+No está en el mismo despliegue que el backend — ver `DECISIONES.md` D-001 para el
+estado actual de esa decisión (contradice lo decidido originalmente sobre Jinja2).
+
+```bash
+cd frontend
+npm install
+npx expo start
+```
+
+### Demo en vivo
+
+```bash
+python scripts/demo_en_vivo.py
+```
+
+Script usado para la demostración en sustentación (ver cabecera del script para el
+guion paso a paso).
+
+---
+
 ## Estructura
 
 ```
-platano-logistica/
+CodeBack/
 ├─ app/
-│  ├─ main.py                  # aplicación FastAPI
+│  ├─ main.py                  # aplicación FastAPI — registra routers y dependencias
 │  ├─ config.py                # settings y carga de config/parametros.yaml
 │  ├─ db.py                    # engine y sesión
-│  ├─ models/                  # SQLAlchemy               → David
-│  ├─ schemas/                 # Pydantic                 → José Miguel
-│  ├─ api/                     # routers                  → José Miguel
+│  ├─ models/                  # SQLAlchemy (entidades.py)
+│  ├─ schemas/                 # Pydantic — ingesta.py, planes.py, recomendacion.py
+│  ├─ api/                     # routers
 │  │  ├─ ingesta.py            #   recibe de equipos 1 y 3
 │  │  ├─ planes.py             #   consulta del plan
-│  │  └─ insumos.py            #   consulta de insumos
+│  │  ├─ insumos.py            #   consulta de insumos
+│  │  ├─ recomendacion.py      #   POST /api/v1/recomendar (Equipo 3, en vivo)
+│  │  └─ vistas.py             #   vistas Jinja2
 │  ├─ core/
-│  │  ├─ proyeccion/           # cosecha esperada         → Camilo   [backend]
-│  │  │  ├─ base.py            #   determinista
-│  │  │  ├─ predictivo.py      #   scikit-learn
-│  │  │  └─ metricas.py
-│  │  ├─ programacion/         # EL NÚCLEO                → Lizbeth  [backend]
-│  │  │  ├─ fechas.py          #   fecha límite hacia atrás
-│  │  │  ├─ restricciones.py   #   capacidad y ventana
-│  │  │  └─ heuristica.py      #   los 4 pasos
-│  │  └─ insumos/              # derivados del plan       → Lizbeth  [backend]
-│  │     └─ estimacion.py
-│  ├─ integracion/             # clientes equipos 1 y 3   → José M.  [front]
-│  ├─ templates/               # vistas Jinja2            → David    [front]
+│  │  ├─ proyeccion/           # cosecha esperada: base.py (determinista), predictivo.py, metricas.py
+│  │  ├─ programacion/         # EL NÚCLEO: fechas.py, restricciones.py, heuristica.py
+│  │  ├─ insumos/              # derivados del plan: estimacion.py, metricas.py
+│  │  ├─ servicio.py           # orquesta proyección + programación + insumos
+│  │  └─ seguridad.py          # verificación de token entre servicios (D-010/D-018)
+│  ├─ integracion/             # clientes equipos 1 y 3
+│  ├─ templates/                # vistas Jinja2 (reporte de apoyo a decisión)
 │  └─ static/
+├─ frontend/                   # app móvil Expo/React Native — ver D-001 (contradice la decisión original)
 ├─ config/parametros.yaml      # tiempos, capacidades, coeficientes (NO en el código)
-├─ data/                       # muestras y procedencia
-├─ docs/                       # contrato, modelo de datos, OpenAPI exportado
+├─ data/                       # muestras y procedencia (pendiente de llenar, ver data/README.md)
+├─ docs/                       # contrato, modelo de datos, inventario de variables, reporte de evaluación
 ├─ migrations/                 # Alembic
+├─ scripts/demo_en_vivo.py     # demo interactiva para sustentación
+├─ render.yaml                 # despliegue del backend en Render (ver sección arriba)
 └─ tests/
    └─ casos/                   # casos de cálculo con respuesta conocida
 ```
@@ -124,6 +154,9 @@ platano-logistica/
 
 ## Stack
 
-Python · FastAPI · PostgreSQL · SQLAlchemy · Alembic · Jinja2 · pandas · scikit-learn · pytest · Docker
+**Backend:** Python · FastAPI · PostgreSQL · SQLAlchemy · Alembic · Jinja2 · pandas ·
+scikit-learn · pytest · Docker · Render (despliegue)
 
-Todas con licencias libres. El presupuesto de software del anteproyecto es $0.
+**App móvil:** Expo · React Native (ver `DECISIONES.md` D-001 — estado en revisión)
+
+Todas con licencias libres. El presupuesto de software del anteproyecto es $0 (planes free de Render).

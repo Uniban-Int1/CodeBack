@@ -19,12 +19,13 @@ class ItemPlanRespuesta(BaseModel):
 
 
 class InsumoRequerimientoRespuesta(BaseModel):
-    """Requerimiento y déficit estimado para un insumo de empaque."""
+    """Requerimiento, déficit y excedente estimado para un insumo de empaque."""
     insumo: str = Field(..., description="Nombre del insumo (cajas, carton, bolsas)")
     fecha: date = Field(..., description="Fecha requerida para el empaque")
     cantidad_requerida: float = Field(..., ge=0, description="Total requerido según volumen proyectado")
     inventario_disponible: float = Field(..., ge=0, description="Saldo disponible en acopio/parcela")
     deficit: float = Field(..., ge=0, description="Cantidad faltante por suministrar")
+    excedente: float = Field(0.0, ge=0, description="Sobrante de inventario frente a lo requerido (D-013)")
 
 
 class MetricasPlanRespuesta(BaseModel):

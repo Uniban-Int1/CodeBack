@@ -9,18 +9,28 @@ Una decisión revertida no se borra: se marca como superada y se enlaza la que l
 ---
 
 ## D-001 · Frontend en Jinja2, no React
-**Fecha:** septiembre de 2026 · **Decidió:** el equipo · **Estado:** vigente
+**Fecha:** septiembre de 2026 · **Decidió:** el equipo · **Estado:** EN REVISIÓN — contradicha por el código actual
 
 Las plantillas Jinja2 viven dentro del mismo servicio FastAPI.
 
-**Se descartó:** React como proyecto separado.
+**Se descartó (en su momento):** React como proyecto separado.
 
-**Por qué:** React exige un segundo proyecto con build, manejo de estado y capa de consumo de la API
-— un sistema adicional que mantener en las tres semanas asignadas a esa etapa. El entregable es
-un reporte de apoyo a decisión, no una aplicación interactiva; la guía pide "una vista o reporte".
-Con Jinja2 no hay nada que compilar y el despliegue es uno solo.
+**Por qué (en su momento):** React exige un segundo proyecto con build, manejo de estado y capa de
+consumo de la API — un sistema adicional que mantener en las tres semanas asignadas a esa etapa.
+El entregable es un reporte de apoyo a decisión, no una aplicación interactiva; la guía pide "una
+vista o reporte". Con Jinja2 no hay nada que compilar y el despliegue es uno solo.
 
 **Si se necesitan gráficas:** Chart.js por CDN sobre las mismas plantillas, sin cambiar la arquitectura.
+
+**⚠️ Contradicción detectada (octubre de 2026):** el repositorio ya contiene `frontend/`, una app
+Expo/React Native completa (`App.js`, 958 líneas, con `package.json`, `app.json`, `eas.json`).
+Las plantillas Jinja2 (`app/templates/`) también siguen existiendo y en uso (`app/api/vistas.py`).
+No queda registro en este archivo de quién decidió agregar React Native ni por qué se dejó de
+respetar esta decisión. **El equipo necesita decidir explícitamente uno de dos caminos:**
+mantener ambos frontends con un propósito distinto cada uno (Jinja2 como reporte de apoyo a
+decisión, React Native como demo interactiva), o declarar esta decisión superada y documentar
+por qué. Mientras no se resuelva, hay una contradicción visible entre este documento y el código
+para cualquiera que revise el repositorio — incluido el profesor.
 
 ---
 
