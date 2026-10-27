@@ -308,6 +308,31 @@ decisión operativa separada de este cambio de código.
 
 ---
 
+## D-019 · Riesgo de histórico real materializado: el proyecto se evalúa 100 % con datos sintéticos
+**Fecha:** octubre de 2026 · **Decidió:** el equipo · **Estado:** vigente
+
+El riesgo declarado en `CONTEXT.md` §11 desde el anteproyecto ("asumimos acceso a los
+registros históricos de Unibán") **se materializó: ese acceso no llegó**. Todos los datos
+usados en pruebas, evaluación y demostración son sintéticos, nombrados con el prefijo
+`sintetico_` donde aplica (D-006) y declarados explícitamente como tales en todo reporte.
+
+**Se descartó:** esperar a que llegara el histórico antes de cerrar la evaluación para el
+informe final.
+
+**Por qué:** el riesgo ya estaba previsto y tenía una salida planeada (D-006); seguir
+esperando sin fecha límite comprometía el cronograma hacia el informe final (16 de
+noviembre). El motor de programación no depende de histórico, así que esto no afecta el
+objetivo 1 ni 3; solo condiciona cómo se reporta el objetivo 2 (T-14).
+
+**Consecuencia:** `docs/reporte-evaluacion.md` ya refleja esto — todas sus métricas vienen
+de fixtures sintéticos, no de cosecha observada. Ningún resultado de T-14 se presenta como
+evidencia de que el modelo predictivo deba adoptarse (D-003 sigue condicionando esa
+adopción a una comparación real que no se hizo). Esto también cierra, de nuestro lado, la
+pregunta pendiente para el Equipo 1 sobre acceso a histórico real — ya no es necesario
+insistir en eso.
+
+---
+
 <!--
 ## D-00X · Título de la decisión
 **Fecha:** · **Decidió:** · **Estado:** vigente | superada por D-00Y

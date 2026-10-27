@@ -122,9 +122,9 @@ Regresión con partición temporal y validación cruzada de series de tiempo. Va
 
 **Estado:** implementación de la evaluación temporal y comparación entre el modelo predictivo, el determinista y la línea base ingenua probada con datos sintéticos. Las métricas comparativas se calculan y devuelven en resultados en memoria; actualmente no se encontró almacenamiento durable de estas métricas. El repositorio no especifica qué mecanismo durable, si alguno, debe utilizarse para satisfacer la expresión «métricas registradas»; esto no establece un requisito nuevo de persistencia. Los resultados sintéticos validan el comportamiento técnico, pero no demuestran que el modelo predictivo supere a ambos métodos de referencia.
 
-**Pendiente:** no se ha realizado una evaluación con datos históricos reales autorizados de Unibán porque no se dispone de ellos. La validación real y la decisión de adopción continúan pendientes de aplicar D-003 con datos reales, mediante una evaluación temporal sin fuga de información y con predicciones deterministas reconstruidas para cada corte temporal. Hasta contar con esa evidencia, no se afirma que el modelo predictivo supere a ambos métodos ni que reemplace al determinista; T-14 no se declara completamente cerrada.
+**Cerrado como riesgo materializado (D-019, octubre de 2026):** no habrá evaluación con datos históricos reales autorizados de Unibán — ese acceso no llegó y se decidió no seguir esperándolo. No se afirma que el modelo predictivo supere a ambos métodos ni que reemplace al determinista; T-14 se reporta exclusivamente con evidencia sintética (D-006), que es la condición definitiva de cierre de esta tarea, no un estado transitorio.
 
-**Dependencia externa:** proporcionar acceso autorizado al histórico real de cosecha de Unibán y a los datos necesarios para reconstruir las predicciones deterministas por corte temporal. No se presupone una fuente ni un compromiso de entrega.
+**Dependencia externa (resuelta, no se concretó):** se necesitaba acceso autorizado al histórico real de cosecha de Unibán y a los datos para reconstruir las predicciones deterministas por corte temporal. No llegó; ver D-019 en `DECISIONES.md`.
 
 ---
 

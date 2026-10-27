@@ -40,7 +40,7 @@ que una variable esté ausente del histórico.
 | `inventario[].insumo` | Equipo 3 | string | No aplica | Presente en el arreglo de inventario del contrato | Pendiente | Por parcela según la tabla del contrato; cobertura histórica pendiente |
 | `inventario[].cantidad` / `cantidad_disponible` | Equipo 3 | numérico; el modelo almacena `Numeric(10, 2)` y la aplicación lo recibe como `float` | **Unidad física no definida**; confirmar por cada insumo | El contrato muestra una cantidad numérica, sin especificar unidad ni periodo o marca temporal en el ejemplo | Pendiente | La base de datos modela periodo; el contrato de integración no lo incluye en el objeto de ejemplo. Periodo, cobertura, frecuencia y actualidad reales pendientes |
 | `consumos[].insumo`, `.periodo`, `.cantidad` | Equipo 3 | `consumos[]` es opcional; el ejemplo incluye insumo string, periodo y cantidad numérica | Unidad física no definida; confirmar por cada insumo | Opcional en el contrato | Pendiente | El ejemplo incluye un periodo; longitud del histórico y cobertura temporal pendientes |
-| Histórico de cosecha real por parcela/semana | Unibán, vía Equipo 3 o directamente; canal no confirmado | Tipo y formato no especificados | No definida; se esperaría volumen de cosecha, por confirmar | No forma parte de una entrega confirmada en el repositorio | Pendiente; riesgo registrado en `CONTEXT.md` §11 | Pendiente |
+| Histórico de cosecha real por parcela/semana | Unibán, vía Equipo 3 o directamente | Tipo y formato no especificados | No definida; se esperaría volumen de cosecha | **No llegó — CERRADO** (D-019): el riesgo de `CONTEXT.md` §11 se materializó | No habrá verificación real; T-14 se evalúa 100 % con datos sintéticos | No aplica |
 | Estacionalidad (clima, precio) | No hay fuente responsable acordada | Tipo y formato no especificados | No definida | No incluida en el contrato actual | Pendiente | Pendiente |
 
 ## Confirmaciones pendientes para inventario
@@ -76,11 +76,13 @@ los saldos de inventario desde este archivo YAML.
 
 ## Lectura para T-14 (modelo predictivo)
 
-Con lo documentado no hay histórico de cosecha real confirmado. `consumos[]` es un
-histórico opcional de consumo de insumos, no histórico de volumen de cosecha. La edad
-de racimo, señalada como variable relevante en TAREAS.md, tampoco está en el contrato
-actual.
+**CERRADO (D-019, octubre de 2026):** el histórico real de cosecha no llegó. No se trata
+ya como pendiente de confirmación — es un hecho confirmado para el resto del proyecto.
+`consumos[]` sigue siendo histórico opcional de consumo de insumos, no de volumen de
+cosecha, así que tampoco cubre este hueco. La edad de racimo, señalada como variable
+relevante en TAREAS.md, tampoco llegó a formar parte de ningún contrato real.
 
-**Conclusión provisional:** hasta que se confirme una fuente real, T-14 debe tratarse
-como escenario de riesgo conforme a D-006; los datos sintéticos deben declararse como
-tales. Esta conclusión no sustituye la verificación exigida por T-04.
+**Conclusión:** T-14 se evalúa exclusivamente con datos sintéticos declarados como tales
+(D-006), conforme a lo previsto en `CONTEXT.md` §11. Ningún resultado de T-14 se presenta
+como validación productiva real ni como base para decidir su adopción (D-003 sigue sin
+cumplirse). Ya no es necesario insistirle al Equipo 1 sobre acceso a histórico real.

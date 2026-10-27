@@ -28,6 +28,11 @@ autorizados de Unibán.** Los números y gráficos de este informe que proceden 
 fixtures son sintéticos; no son observaciones productivas ni estimaciones de
 desempeño real.
 
+**Actualización (D-019, octubre de 2026):** el riesgo declarado en `CONTEXT.md` §11 ya
+se resolvió — ese acceso no llegó y no va a llegar. Esto deja de ser una brecha temporal
+de evidencia y pasa a ser la condición definitiva de evaluación del proyecto: toda
+métrica de este informe es sintética por decisión, no por falta de tiempo.
+
 ## 2. T-04 — Inventario de variables
 
 La tabla resume `docs/inventario-variables.md`. “Pendiente” en verificación real
@@ -37,7 +42,7 @@ resumen lo documentado, no observaciones reales.
 
 | Variable | Tipo documentado | Unidad documentada | Estado contractual/documental | Cobertura documentada | Verificación real |
 |---|---|---|---|---|---|
-| `parcela_id` | string | No aplica | Requerido; formato `P-NNN` es propuesta D-007 | Disponibilidad del identificador real pendiente | Pendiente |
+| `parcela_id` | string (UUID) | No aplica | Requerido; formato cerrado en D-016 (identificador del sistema de origen, ya no `P-NNN`/D-007, superada) | Confirmado de punta a punta con Equipo 1 y Equipo 3 (ver `docs/inventario-variables.md`) | Confirmado |
 | `fecha` de aforamiento | date | Fecha calendario | Requerido | Por aforamiento; serie histórica y rango pendientes | Pendiente |
 | `area_ha` | float | hectáreas (`ha`) | Requerido | Por aforamiento; rango histórico pendiente | Pendiente |
 | `num_plantas_estimado` | int | plantas | Requerido | Por aforamiento; frecuencia y rango pendientes | Pendiente |
@@ -269,23 +274,29 @@ proceder de fixtures diferentes; los errores T-18 no se agregan entre unidades.
 | D-006 — declarar escenarios sintéticos | Vigente | Etiquetar fixtures y gráficas como “Datos sintéticos” |
 | D-009 — ventanas con mínimo 48 h de anticipación | Propuesta — pendiente de validar con equipos 1 y 3 | No presentar como regla aprobada ni describir T-19 como actualización automática |
 | D-015 — error de estimación de insumos | Vigente | Aplicar error absoluto y límites de emparejamiento/unidades; no agregar unidades físicas diferentes |
+| D-016 — `parcela_id` es el identificador del sistema de origen (UUID), reemplaza D-007 | Vigente | El identificador de parcela ya no es una brecha de T-04; queda confirmado en vez de pendiente |
+| D-019 — riesgo de histórico real materializado: no llegó | Vigente | T-04 y T-14 dejan de describirse como "pendientes de verificación" y pasan a "evaluados exclusivamente con sintéticos, por decisión" |
 
-**Limitaciones pendientes por tarea:**
+**Limitaciones por tarea** (ya no son brechas temporales de evidencia para T-04/T-14;
+son la condición definitiva de evaluación tras D-019):
 
-- **T-04:** falta el extracto histórico real autorizado para verificar disponibilidad,
-  tipos, unidades y cobertura. Disponibilidad no verificada no equivale a ausencia.
+- **T-04:** no hubo extracto histórico real autorizado — por decisión (D-019), no por
+  falta de tiempo. Disponibilidad, tipos, unidades y cobertura reales nunca se
+  verificaron y no se van a verificar dentro de este proyecto.
 - **T-06:** la prueba de 145.6 solo valida la fórmula con aforamiento sintético;
-  no se evaluó frente a cosecha observada.
-- **T-14:** faltan datos históricos reales autorizados y variables confirmadas
-  suficientes para una evaluación productiva. No se ha demostrado superioridad
-  del predictivo; la adopción permanece condicionada por D-003. Las métricas
-  comparativas se devuelven en memoria; no se encontró almacenamiento durable
-  implementado ni el repositorio define un requisito durable para “métricas
+  no se evaluó frente a cosecha observada, y no se evaluará (D-019).
+- **T-14:** no hubo datos históricos reales ni evaluación productiva — por decisión,
+  no por brecha pendiente. No se ha demostrado superioridad del predictivo; su
+  adopción sigue sin cumplir D-003 y así se queda (no hay evaluación real programada).
+  Las métricas comparativas se devuelven en memoria; no se encontró almacenamiento
+  durable implementado ni el repositorio define un requisito durable para “métricas
   registradas”.
-- **T-18:** la validación real requiere confirmar unidades, claves, cobertura y
-  correspondencia temporal. La evidencia actual es sintética.
+- **T-18:** la validación real requeriría confirmar unidades, claves, cobertura y
+  correspondencia temporal con datos reales que no van a llegar (D-019). La evidencia
+  de este informe es, y seguirá siendo, sintética.
 - **T-19:** se probó un contraste sintético de dos planes explícitos; D-009
-  permanece pendiente de validación y no se probó automatización operacional.
+  permanece pendiente de validación con los equipos 1 y 3 y no se probó
+  automatización operacional.
 
 Las pruebas de origen se encuentran en `tests/casos/` y las implementaciones
 citadas en `app/core/`. Los valores incluidos aquí se refieren a sus fixtures

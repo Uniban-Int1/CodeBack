@@ -310,15 +310,18 @@ Ver `DECISIONES.md` para el registro completo con fecha y justificación. Resume
 
 ---
 
-## 11. Riesgo declarado
+## 11. Riesgo declarado — MATERIALIZADO
 
-**Asumimos acceso a los registros históricos de Unibán.**
+**Asumíamos acceso a los registros históricos de Unibán. No se concretó.** Ver D-019 en
+`DECISIONES.md`. El proyecto se evalúa con escenarios **sintéticos, declarados
+explícitamente como tales** (D-006) — no con histórico real.
 
-Si ese acceso no se concreta:
+Consecuencias, tal como se anticiparon:
 
 - El motor de programación **no depende de histórico** — funciona con la proyección determinista, la ventana y las capacidades. Sigue en pie.
-- Solo se ve afectado el objetivo 2. Se pasa a escenarios sintéticos **declarados explícitamente como tales**, sin presentarlos como validación productiva real.
-- Cambia el instrumento de prueba, no el alcance.
+- El objetivo 2 (predictivo, T-14) se evalúa contra datos sintéticos; no se afirma ni se
+  presenta como validación productiva real en ningún reporte (ver `docs/reporte-evaluacion.md`).
+- Cambió el instrumento de prueba, no el alcance del proyecto.
 
 ---
 
@@ -341,11 +344,11 @@ Si ese acceso no se concreta:
 Exigidas por la guía del curso:
 
 - [x] Repositorio con control de versiones
-- [ ] README con instrucciones de ejecución
-- [ ] Registro de decisiones técnicas y cambios de alcance (`DECISIONES.md`)
-- [ ] Datos de prueba o muestras con procedencia y licencia (`data/README.md`)
-- [ ] Pruebas funcionales/técnicas y resultados
-- [ ] Video o demostración reproducible del componente
+- [x] README con instrucciones de ejecución — `README.md`, verificado contra el estado real del repo (Docker, Render, app móvil, demo)
+- [x] Registro de decisiones técnicas y cambios de alcance — `DECISIONES.md`, 19 decisiones con fecha y justificación
+- [ ] Datos de prueba o muestras con procedencia y licencia (`data/README.md`) — **sigue vacío**, no hay archivos en `data/muestras/` todavía
+- [x] Pruebas funcionales/técnicas y resultados — 196 pruebas (`pytest`) + `docs/reporte-evaluacion.md`
+- [ ] Video o demostración reproducible del componente — existe `scripts/demo_en_vivo.py`, pero no hay evidencia en el repo de que ya se haya grabado el video
 
 ---
 
