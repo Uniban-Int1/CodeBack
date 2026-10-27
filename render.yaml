@@ -6,6 +6,7 @@ services:
     plan: free
     branch: main
     dockerfilePath: Dockerfile
+    preDeployCommand: alembic upgrade head
     envVars:
       - key: APP_ENV
         value: prod
