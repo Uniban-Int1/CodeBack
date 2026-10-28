@@ -6,7 +6,8 @@ services:
     plan: free
     branch: main
     dockerfilePath: Dockerfile
-    preDeployCommand: alembic upgrade head
+    # Pre-Deploy Command requiere plan pago en Render (bloqueado en free).
+    # Las migraciones corren en el CMD del Dockerfile en su lugar.
     envVars:
       - key: APP_ENV
         value: prod

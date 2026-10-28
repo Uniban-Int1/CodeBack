@@ -13,5 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el código fuente
 COPY . .
 
-# Comando de arranque para Render usando la variable $PORT
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Migraciones + arranque. "Pre-Deploy Command" está bloqueado en el plan free de
+# Render, así que las migraciones van aquí: corren en cada arranque del contenedor,
+# son idempotentes (Alembic no repite lo ya aplicado), así que no hace daño correrlas
+# también en cada reinicio por inactividad del plan free.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
