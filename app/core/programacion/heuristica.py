@@ -151,8 +151,8 @@ def programar(
                     carga_estimada_racimos=parcela.volumen_racimos,
                     cumple_ventana=False,
                     motivo=(
-                        f"la carga ({parcela.volumen_racimos} racimos) supera la capacidad "
-                        "de todos los vehículos disponibles"
+                        f"la carga ({parcela.volumen_racimos} racimos) no cabe en la capacidad "
+                        "restante de ningún vehículo"
                     ),
                 )
             )
