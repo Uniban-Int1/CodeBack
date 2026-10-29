@@ -1,9 +1,17 @@
-# Contrato de integración — v2
+# Contrato de integración — v2 (referencia técnica)
 
-> **Estado:** v2 — refleja la integración **en funcionamiento** con el Equipo 3 (verificada el
-> 28/10/2026 contra los dos backends desplegados; ver `docs/pruebas-integracion.md`).
-> **Responsable de publicar y versionar:** Equipo 2.
-> Los cambios se acuerdan en sesión de seguimiento y se numeran v1, v2…
+> **Contrato acordado Equipo 3 ↔ Equipo 2:** el documento del Equipo 3,
+> [`docs/contrato-equipo2.md`](https://github.com/JuanSebastian05/uniban-app-suministros/blob/main/docs/contrato-equipo2.md)
+> en su repositorio, adoptado por ambos equipos el 28/10/2026. Es la versión que se presenta
+> como contrato de la integración.
+>
+> **Este documento** es la referencia técnica del servicio del Equipo 2: detalla campos,
+> unidades, valores por defecto y errores de `POST /api/v1/recomendar`, y debe coincidir con
+> el contrato acordado. Si difieren, se corrige el que esté desactualizado en la siguiente
+> sesión de seguimiento. Integración verificada el 28/10/2026 contra los dos backends
+> desplegados (ver `docs/pruebas-integracion.md`).
+> **Responsable de este documento:** Equipo 2. Las horas se expresan en hora local de
+> Colombia, sin zona horaria explícita.
 
 Somos seis subproyectos, no seis islas. Este documento es la frontera entre los tres equipos
 del proyecto Plátano–Unibán. La arquitectura completa está en `docs/arquitectura.md`.

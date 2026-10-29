@@ -12,7 +12,8 @@ Plátano – Unibán · Equipo 2 de 3
 | **Contexto completo del proyecto** | [`CONTEXT.md`](CONTEXT.md) — léelo primero |
 | **Reparto y tareas** | [`TAREAS.md`](TAREAS.md) |
 | **Decisiones técnicas** | [`DECISIONES.md`](DECISIONES.md) |
-| **Contrato con los otros equipos** | [`docs/contrato-integracion.md`](docs/contrato-integracion.md) |
+| **Contrato con el Equipo 3 (acordado)** | [`docs/contrato-equipo2.md`](https://github.com/JuanSebastian05/uniban-app-suministros/blob/main/docs/contrato-equipo2.md) en el repositorio del Equipo 3 · referencia técnica en [`docs/contrato-integracion.md`](docs/contrato-integracion.md) |
+| **Arquitectura de los tres equipos** | [`docs/arquitectura.md`](docs/arquitectura.md) |
 
 ---
 

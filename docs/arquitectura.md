@@ -47,8 +47,9 @@ dorada es la única llamada que recibe el Equipo 2.
 ## Contratos
 
 - Equipo 1 → Equipo 3: `docs/integracion-equipo1.txt` (repositorio del Equipo 3).
-- Equipo 3 → Equipo 2: `docs/contrato-integracion.md` v2 (este repositorio) y
-  `docs/contrato-equipo2.md` (repositorio del Equipo 3).
+- Equipo 3 → Equipo 2: `docs/contrato-equipo2.md` (repositorio del Equipo 3), acordado por
+  ambos equipos. La referencia técnica del servicio está en `docs/contrato-integracion.md`
+  (este repositorio).
 
 ## Brechas conocidas
 
