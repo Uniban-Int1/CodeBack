@@ -16,49 +16,23 @@
 
 ## Comunicaciones
 
-```mermaid
-flowchart LR
-    subgraph E1["Equipo 1 · Aforamiento"]
-        IMG["Imagen de parcela"] --> INF["Inferencia: detección y conteo"]
-    end
-    subgraph E3["Equipo 3 · Gestión operativa"]
-        BE3["Backend uniban-app-suministros"]
-        APP["App Android del productor"]
-        DB3[("Base de datos E3")]
-        APP <-->|"sincronización, token Firebase"| BE3
-        BE3 --- DB3
-    end
-    subgraph E2["Equipo 2 · Logística e insumos"]
-        API2["API platano-logistica-api"]
-        CORE["Motor: proyección, fechas,<br/>heurística, insumos"]
-        CFG["config/parametros.yaml"]
-        API2 --> CORE --> CFG
-        DEMO["Herramienta de demo<br/>(simulador, métricas)"] -.->|"solo sustentación"| API2
-    end
-    INF -->|"GET /api/v1/service/parcels<br/>POST /api/v1/aforamientos<br/>cabecera X-API-Key"| BE3
-    BE3 -->|"GET /salud (despertar)<br/>POST /api/v1/recomendar"| API2
-    API2 -->|"recomendación JSON"| BE3
-```
+![Arquitectura UNIBÁN: componentes de los tres equipos y sus llamadas](arquitectura.svg)
 
-## Secuencia de extremo a extremo (demo del 29/10)
+El Equipo 1 nunca le habla al Equipo 2: su aforamiento llega al backend del Equipo 3, que
+lo reenvía junto con el inventario cuando el productor pide una recomendación. La línea
+dorada es la única llamada que recibe el Equipo 2.
 
-```mermaid
-sequenceDiagram
-    participant I as Inferencia (E1)
-    participant B as Backend E3
-    participant A as App Android (E3)
-    participant L as Servicio E2
-    I->>B: GET /api/v1/service/parcels (X-API-Key)
-    B-->>I: parcelas con su UUID
-    I->>B: POST /api/v1/aforamientos {parcelId, date, estimatedPlants, confidence}
-    B-->>I: 201 CREATED (reenvío idéntico: 200 DUPLICATE)
-    A->>B: pedir recomendación de la parcela
-    B->>B: último aforamiento + inventario de cajas/cartón/bolsas
-    B->>L: GET /salud y luego POST /api/v1/recomendar
-    L-->>B: volumen, hora límite, plan, insumos (déficit/excedente), métricas
-    B->>B: valida y guarda la recomendación
-    B-->>A: la app la muestra (y la conserva sin conexión)
-```
+## Recorrido de extremo a extremo (demo del 29/10)
+
+| Paso | Quién | Qué pasa |
+|---|---|---|
+| 1 | Equipo 1 | Descarga las parcelas con `GET /api/v1/service/parcels`. Cada una trae el UUID que usan los tres equipos. |
+| 2 | Equipo 1 | Procesa la imagen en el celular: el modelo YOLO detecta y cuenta plantas y calcula la confianza media de las detecciones. |
+| 3 | Equipo 1 → Equipo 3 | Envía el aforamiento con `POST /api/v1/aforamientos` (`parcelId`, fecha, área, plantas, confianza). Un reenvío idéntico responde `DUPLICATE`. |
+| 4 | Equipo 3 | El productor pide la recomendación en la app; el backend toma el último aforamiento y el inventario de cajas, cartón y bolsas. |
+| 5 | Equipo 3 → Equipo 2 | Despierta el servicio con `GET /salud` y envía `POST /api/v1/recomendar` con la ventana de despacho. |
+| 6 | Equipo 2 | Proyecta la cosecha, calcula la hora límite de corte, arma el plan y deriva los insumos (déficit o excedente), con `version_metodo`. |
+| 7 | Equipo 3 | Valida la respuesta, la guarda y la muestra en la app, también sin conexión. |
 
 ## Evitar duplicidades (punto 4 del profesor)
 
