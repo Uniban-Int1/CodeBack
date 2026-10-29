@@ -16,6 +16,16 @@ import { StatusBar } from 'expo-status-bar';
 // puede tardar ~90 s en responder mientras el servicio despierta).
 const API_BASE_URL = 'https://platano-logistica-api.onrender.com';
 
+// Semana ISO 8601 con el formato del contrato, p. ej. "2026-W44".
+const semanaIso = (fecha) => {
+  const d = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()));
+  const diaSemana = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - diaSemana);
+  const inicioAnio = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const semana = Math.ceil(((d - inicioAnio) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(semana).padStart(2, '0')}`;
+};
+
 const PLAN_DEMO = {
   plan_id: "PL-2026-W38",
   periodo: "2026-W38",
@@ -93,9 +103,10 @@ export default function App() {
   const [simInventarioCajas, setSimInventarioCajas] = useState('300');
   const [simVentanaFin, setSimVentanaFin] = useState('16:00'); // Hora de fin de despacho
   const [simResultado, setSimResultado] = useState(null);
+  const [simCalculando, setSimCalculando] = useState(false);
 
-  // Ejecutar simulación local / matemática de dominio en vivo
-  const ejecutarSimulacion = () => {
+  // Respaldo local con la misma fórmula del backend, por si Render no responde.
+  const calcularLocal = () => {
     const numPlantas = parseFloat(simPlantas) || 0;
     const invCajas = parseFloat(simInventarioCajas) || 0;
     const cicloSemanas = 10.5;
@@ -121,7 +132,7 @@ export default function App() {
     const minLimite = Math.max(0, totalMinutos) % 60;
     const horaLimiteStr = `${horaLimite.toString().padStart(2, '0')}:${minLimite.toString().padStart(2, '0')}`;
 
-    setSimResultado({
+    return {
       racimosEsperados,
       cajasRequeridas,
       invCajas,
@@ -129,7 +140,58 @@ export default function App() {
       excedenteCajas,
       horaLimiteStr,
       cumpleVentana: totalMinutos >= 6 * 60, // Si cabe después de las 06:00
-    });
+      fuenteSim: 'local',
+    };
+  };
+
+  // Llama al POST /api/v1/recomendar real en Render. La ventana de despacho se fija
+  // mañana (06:00 a la hora indicada) para no recomendar sobre una fecha ya pasada.
+  const ejecutarSimulacion = async () => {
+    setSimCalculando(true);
+    const manana = new Date();
+    manana.setDate(manana.getDate() + 1);
+    const dia = `${manana.getFullYear()}-${String(manana.getMonth() + 1).padStart(2, '0')}-${String(manana.getDate()).padStart(2, '0')}`;
+    const [h, m] = simVentanaFin.split(':').map(Number);
+    const finStr = `${String(h || 16).padStart(2, '0')}:${String(m || 0).padStart(2, '0')}:00`;
+
+    const cuerpo = {
+      parcela_id: 'P-DEMO',
+      periodo: semanaIso(manana),
+      num_plantas_estimado: parseInt(simPlantas, 10) || 0,
+      calidad_confianza: 0.87,
+      area_ha: parseFloat(simArea) || 2.4,
+      inventario: {
+        cajas: parseFloat(simInventarioCajas) || 0,
+        carton: 400,
+        bolsas: 350,
+      },
+      ventana_despacho: { inicio: `${dia}T06:00:00`, fin: `${dia}T${finStr}` },
+    };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/recomendar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(cuerpo),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const cajas = data.insumos.find((i) => i.insumo === 'cajas') || {};
+      setSimResultado({
+        racimosEsperados: data.volumen_racimos,
+        cajasRequeridas: cajas.cantidad_requerida,
+        invCajas: cajas.inventario_disponible,
+        deficitCajas: cajas.deficit,
+        excedenteCajas: cajas.excedente ?? 0,
+        horaLimiteStr: data.fecha_limite_corte.slice(11, 16),
+        cumpleVentana: data.cumple_ventana,
+        fuenteSim: 'render',
+      });
+    } catch (err) {
+      setSimResultado(calcularLocal());
+    } finally {
+      setSimCalculando(false);
+    }
   };
 
   const cargarDatos = async () => {
@@ -404,14 +466,25 @@ export default function App() {
                 }}
               />
 
-              <TouchableOpacity style={styles.btnSimular} onPress={ejecutarSimulacion}>
-                <Text style={styles.btnSimularTexto}>⚡ Recalcular Recomendación</Text>
+              <TouchableOpacity
+                style={styles.btnSimular}
+                onPress={ejecutarSimulacion}
+                disabled={simCalculando}
+              >
+                <Text style={styles.btnSimularTexto}>
+                  {simCalculando ? 'Consultando el backend en Render...' : '⚡ Recalcular Recomendación'}
+                </Text>
               </TouchableOpacity>
             </View>
 
             {simResultado && (
               <View style={styles.resultadoCard}>
                 <Text style={styles.resultadoTitulo}>📊 Salida del Algoritmo</Text>
+                <Text style={styles.resLabel}>
+                  {simResultado.fuenteSim === 'render'
+                    ? 'Fuente: backend en vivo (Render, POST /api/v1/recomendar)'
+                    : 'Fuente: cálculo local (Render no respondió)'}
+                </Text>
 
                 <View style={styles.resultadoFila}>
                   <Text style={styles.resLabel}>Cosecha Esperada:</Text>
