@@ -16,6 +16,7 @@ del proyecto Plátano–Unibán. La arquitectura completa está en `docs/arquite
 | `ventana_despacho`, `periodo`, `num_plantas_estimado`, `calidad_confianza` e inventario pasan a ser obligatorios en `/recomendar` | Regla 4: antes se inventaban valores por defecto (D-017) | **Sí** |
 | `parcela_id` es el UUID del sistema de origen, no `P-NNN` | D-016 | No (ya era texto libre) |
 | La respuesta incluye `excedente` por insumo | D-013, pedido en `contrato-equipo2.md` del Equipo 3 | No (campo nuevo) |
+| `consumptions[]` se procesa y vuelve resumido en `consumo_reciente` | Antes se recibía y se descartaba | No (campo nuevo) |
 | `POST /ingesta/*` y `GET /planes/{periodo}` quedan definidos pero **sin uso** | En la práctica, el aforamiento llega por el Equipo 3 y el plan se pide por parcela | — |
 
 ---
@@ -49,10 +50,13 @@ prioridad). Campos usados:
 | Vehículo | — | `vehiculo_id`, `capacidad_vehiculo_racimos` | texto; racimos | no (`V-3`, 420) |
 | Área | `parcel.areaHa` | `area_ha` | hectáreas | no (informativa, no entra en el cálculo) |
 
+`consumptions[]` (opcional: `name`, `quantity`, `date`) se resume por insumo de empaque y
+vuelve en `consumo_reciente` (ver la respuesta). Los registros que no son de empaque o no
+traen una cantidad válida se ignoran.
+
 Se aceptan y **se ignoran**: `producerId`, `parcel.name`, `parcel.activeCycle`,
-`aforamiento.date`, `inventory[].supplyId/category/unit` y `consumptions[]`. Esto último es
-una limitación conocida (ver `docs/cumplimiento-objetivos.md`). En el inventario, si llegan
-varios ítems con el mismo nombre, se conserva el último: el Equipo 3 ya los envía sumados.
+`aforamiento.date` e `inventory[].supplyId/category/unit`. En el inventario, si llegan varios
+ítems con el mismo nombre, se conserva el último: el Equipo 3 ya los envía sumados.
 
 Ejemplo real (el que arma el backend del Equipo 3):
 
@@ -120,6 +124,7 @@ pasado, y `/recomendar` todavía no compara contra la hora actual.
 | `insumos[].fecha` | Fecha para la que se necesita el insumo (la del corte) | fecha |
 | `metricas.uso_capacidad` | carga / capacidad del vehículo | proporción 0–1 |
 | `version_metodo` | Método que produjo el resultado (D-005) | — |
+| `consumo_reciente[]` | Por insumo con consumos recibidos: `registros`, `total`, `promedio_por_registro`, `ultima_fecha`, `ultima_cantidad`, `requerido` y `diferencia_requerido_vs_promedio` (positivo = esta cosecha pide más que lo habitual). Vacío si no se enviaron consumos | unidades |
 
 `cumple_ventana` mide solo el tiempo. Un déficit de insumos no lo vuelve falso: se interpreta
 como "comprar antes de la hora de corte".

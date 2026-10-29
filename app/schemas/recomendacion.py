@@ -15,7 +15,7 @@ resultado de forma tan crítica como los demás.
 
 Responsable: José Miguel — frente front y plataforma (T-11, T-12)
 """
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -48,6 +48,7 @@ class SolicitudRecomendacion(BaseModel):
     parcel: dict[str, Any] | None = None
     aforamiento: dict[str, Any] | None = None
     inventory: list[dict[str, Any]] | None = None
+    consumptions: list[dict[str, Any]] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -124,6 +125,20 @@ class SolicitudRecomendacion(BaseModel):
         return data
 
 
+class ConsumoRecienteRespuesta(BaseModel):
+    """Consumo observado de un insumo en los registros enviados por el Equipo 3 (últimos 90 días)."""
+    insumo: str = Field(..., description="cajas, carton o bolsas")
+    registros: int = Field(..., ge=1, description="Cantidad de registros de consumo recibidos")
+    total: float = Field(..., ge=0, description="Suma consumida en esos registros (unidades)")
+    promedio_por_registro: float = Field(..., ge=0, description="Consumo medio por registro (unidades)")
+    ultima_fecha: date | None = Field(None, description="Fecha del consumo más reciente")
+    ultima_cantidad: float | None = Field(None, description="Cantidad del consumo más reciente (unidades)")
+    requerido: float | None = Field(None, description="Lo que pide esta recomendación (unidades)")
+    diferencia_requerido_vs_promedio: float | None = Field(
+        None, description="requerido - promedio_por_registro; positivo = esta cosecha pide más que lo habitual"
+    )
+
+
 class RespuestaRecomendacion(BaseModel):
     """Respuesta directa entregada al Equipo 3."""
     parcela_id: str
@@ -135,3 +150,6 @@ class RespuestaRecomendacion(BaseModel):
     item_plan: ItemPlanRespuesta
     insumos: list[InsumoRequerimientoRespuesta]
     metricas: MetricasPlanRespuesta
+    consumo_reciente: list[ConsumoRecienteRespuesta] = Field(
+        default_factory=list, description="Resumen de consumptions[]; vacío si no se enviaron"
+    )

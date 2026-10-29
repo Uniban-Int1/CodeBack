@@ -5,7 +5,7 @@
 > repositorio y sus limitaciones. Todos los datos son **sintéticos** (D-006, D-019): no hubo
 > acceso a registros históricos de Unibán.
 
-Ejecutar todas las pruebas: `pytest` (199 pruebas).
+Ejecutar todas las pruebas: `pytest` (203 pruebas).
 
 ## Objetivos específicos del anteproyecto
 
@@ -23,10 +23,10 @@ Ejecutar todas las pruebas: `pytest` (199 pruebas).
 | Modelo determinista funcional y validado para cajas, cartón y bolsas | ✅ | `/recomendar` en producción; `test_caso_02`, `03`, `06`, `07` |
 | Modelo predictivo evaluado, con métricas y comparación frente al modelo base | ⚠️ | `scripts/evaluar_modelos.py`; pestaña Modelos de la app de demo. Con datos sintéticos, no históricos |
 | Módulo de apoyo a la programación de cosecha y despacho | ✅ | `scripts/demo_programacion.py` (varios productores consolidados en vehículos) |
-| Procesar aforamiento, cosecha esperada, inventarios, consumos y ventanas | ⚠️ | Todos se procesan salvo **consumos**: se reciben y se ignoran |
+| Procesar aforamiento, cosecha esperada, inventarios, consumos y ventanas | ✅ | Todos entran en `/recomendar`. Los consumos se resumen por insumo y se comparan con lo requerido (`consumo_reciente`, `app/core/insumos/consumos.py`, `test_caso_13`) |
 | Recomendaciones con cantidades requeridas, déficit o excedente y fechas | ✅ | Respuesta de `/recomendar` (`insumos[]`) |
 | API funcional y documentada para el Equipo 3 | ✅ | `/docs` (Swagger) y `docs/contrato-integracion.md` v2 |
-| Evidencia de pruebas, coherencia y trazabilidad | ✅ | 199 pruebas; `version_metodo` en cada respuesta (D-005); `docs/pruebas-integracion.md` |
+| Evidencia de pruebas, coherencia y trazabilidad | ✅ | 203 pruebas; `version_metodo` en cada respuesta (D-005); `docs/pruebas-integracion.md` |
 | La recomendación se ve en el componente del Equipo 3 | ✅ | Capturas de la app Android del Equipo 3 (P3 en `docs/pruebas-integracion.md`) |
 | Datos simulados identificados | ✅ | D-006, D-019; prefijo `sintetico_` y advertencias en cada salida |
 
@@ -47,8 +47,9 @@ Ejecutar todas las pruebas: `pytest` (199 pruebas).
 
 1. **Sin datos históricos reales** (D-019): el predictivo y el error de insumos solo se evalúan
    con datos sintéticos.
-2. **Consumos sin procesar:** el Equipo 3 los envía; no se usan para recalibrar coeficientes ni
-   para medir el error de estimación (D-015).
+2. **Consumos solo como referencia:** se resumen y se comparan con lo requerido, pero no
+   recalibran los coeficientes ni miden el error de estimación de D-015, porque no hay forma de
+   emparejar cada consumo con la cosecha que lo produjo.
 3. **Heurística fuera del flujo integrado:** la consolidación de varios productores se demuestra
    aparte, no la pide el Equipo 3.
 4. **Ventana de despacho sintética** y sin comparación con la hora actual en `/recomendar`.

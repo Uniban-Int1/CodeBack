@@ -17,7 +17,9 @@ from app.schemas.planes import (
     ItemPlanRespuesta,
     MetricasPlanRespuesta,
 )
+from app.core.insumos.consumos import resumir_consumos
 from app.schemas.recomendacion import (
+    ConsumoRecienteRespuesta,
     RespuestaRecomendacion,
     SolicitudRecomendacion,
 )
@@ -127,6 +129,14 @@ def generar_recomendacion(
     capacidad_total = solicitud.capacidad_vehiculo_racimos
     uso_capacidad = round(min(1.0, rec.volumen_racimos / capacidad_total), 2) if capacidad_total > 0 else 0.0
 
+    consumo_reciente = [
+        ConsumoRecienteRespuesta(**vars(c))
+        for c in resumir_consumos(
+            solicitud.consumptions or [],
+            {r.insumo: r.cantidad_requerida for r in rec.requerimientos},
+        )
+    ]
+
     return RespuestaRecomendacion(
         parcela_id=solicitud.parcela_id,
         periodo=solicitud.periodo,
@@ -140,4 +150,5 @@ def generar_recomendacion(
             cumplimiento_ventana=1.0 if cumple_ventana else 0.0,
             uso_capacidad=uso_capacidad,
         ),
+        consumo_reciente=consumo_reciente,
     )
