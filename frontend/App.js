@@ -104,6 +104,26 @@ export default function App() {
   const [simVentanaFin, setSimVentanaFin] = useState('16:00'); // Hora de fin de despacho
   const [simResultado, setSimResultado] = useState(null);
   const [simCalculando, setSimCalculando] = useState(false);
+  const [evaluacion, setEvaluacion] = useState(null);
+  const [evalCargando, setEvalCargando] = useState(false);
+  const [evalError, setEvalError] = useState(false);
+
+  // Métricas calculadas en el backend (escenario sintético declarado), nunca valores fijos.
+  const cargarEvaluacion = async () => {
+    setEvalCargando(true);
+    setEvalError(false);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/modelos/evaluacion`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setEvaluacion(await res.json());
+    } catch (err) {
+      setEvalError(true);
+    } finally {
+      setEvalCargando(false);
+    }
+  };
 
   // Respaldo local con la misma fórmula del backend, por si Render no responde.
   const calcularLocal = () => {
@@ -256,10 +276,10 @@ export default function App() {
           ))}
         </View>
 
-        {fuente !== 'api_en_vivo' && (
+        {fuente !== 'api_en_vivo' && (seccion === 'recoleccion' || seccion === 'insumos') && (
           <View style={styles.alertaOffline}>
             <Text style={styles.alertaOfflineText}>
-              ℹ️ Modo demostración activo ({fuente})
+              ℹ️ Plan de ejemplo: aún no hay planes guardados en el backend ({fuente})
             </Text>
           </View>
         )}
@@ -548,39 +568,52 @@ export default function App() {
                 Regla D-003: El modelo predictivo solo reemplaza al determinista si supera a la línea base ingenua y al modelo base.
               </Text>
 
-              {/* Tabla Comparativa */}
-              <View style={styles.tablaModelos}>
-                <View style={styles.tablaHeader}>
-                  <Text style={[styles.th, { flex: 1.4 }]}>Modelo</Text>
-                  <Text style={[styles.th, { flex: 1 }]}>Error MAE</Text>
-                  <Text style={[styles.th, { flex: 1.2 }]}>Estado</Text>
-                </View>
-
-                <View style={styles.tablaFila}>
-                  <Text style={[styles.td, { flex: 1.4 }]}>1. Línea Base Ingenua</Text>
-                  <Text style={[styles.td, { flex: 1 }]}>18.4%</Text>
-                  <Text style={[styles.tdBadge, { color: '#64748B' }]}>Referencia</Text>
-                </View>
-
-                <View style={[styles.tablaFila, styles.filaOficial]}>
-                  <Text style={[styles.td, styles.bold, { flex: 1.4 }]}>2. Determinista (Físico)</Text>
-                  <Text style={[styles.td, styles.bold, { flex: 1 }]}>7.2%</Text>
-                  <Text style={[styles.tdBadge, { color: '#0F5132' }]}>✓ Oficial en Prod</Text>
-                </View>
-
-                <View style={styles.tablaFila}>
-                  <Text style={[styles.td, { flex: 1.4 }]}>3. Predictivo (Scikit-Learn)</Text>
-                  <Text style={[styles.td, { flex: 1 }]}>8.1%*</Text>
-                  <Text style={[styles.tdBadge, { color: '#9A7208' }]}>Sintético (T-14)</Text>
-                </View>
-              </View>
-
-              <View style={styles.notaAcademica}>
-                <Text style={styles.notaAcademicaTitulo}>📋 Conclusión del Experimento (D-003)</Text>
-                <Text style={styles.notaAcademicaTexto}>
-                  Al evaluarse con partición temporal, el modelo determinista ofrece la menor tasa de error reproducible y física en campo. Se declara explícitamente que los resultados del modelo predictivo proceden de datos sintéticos a la espera de históricos autorizados de Unibán.
+              <TouchableOpacity style={styles.btnSimular} onPress={cargarEvaluacion} disabled={evalCargando}>
+                <Text style={styles.btnSimularTexto}>
+                  {evalCargando ? 'Evaluando en Render...' : '📊 Correr evaluación en el backend'}
                 </Text>
-              </View>
+              </TouchableOpacity>
+
+              {evalError && (
+                <Text style={styles.resLabel}>
+                  No se pudo obtener la evaluación desde Render. Vuelve a intentar en unos segundos.
+                </Text>
+              )}
+
+              {evaluacion && (
+                <View>
+                  <Text style={styles.resLabel}>⚠️ {evaluacion.advertencia}</Text>
+                  <Text style={styles.resLabel}>MAE en {evaluacion.unidad} (menor es mejor)</Text>
+
+                  {/* Tabla calculada por GET /api/v1/modelos/evaluacion */}
+                  <View style={styles.tablaModelos}>
+                    <View style={styles.tablaHeader}>
+                      <Text style={[styles.th, { flex: 1 }]}>Bloque</Text>
+                      <Text style={[styles.th, { flex: 1 }]}>Predictivo</Text>
+                      <Text style={[styles.th, { flex: 1 }]}>Determinista</Text>
+                      <Text style={[styles.th, { flex: 1 }]}>Ingenua</Text>
+                    </View>
+                    {[...evaluacion.bloques, evaluacion.holdout].map((b) => (
+                      <View
+                        key={b.bloque}
+                        style={[styles.tablaFila, b.bloque === 'holdout' && styles.filaOficial]}
+                      >
+                        <Text style={[styles.td, { flex: 1 }, b.bloque === 'holdout' && styles.bold]}>
+                          {b.bloque}
+                        </Text>
+                        <Text style={[styles.td, { flex: 1 }]}>{b.mae_predictivo.toFixed(2)}</Text>
+                        <Text style={[styles.td, { flex: 1 }]}>{b.mae_determinista.toFixed(2)}</Text>
+                        <Text style={[styles.td, { flex: 1 }]}>{b.mae_ingenua.toFixed(2)}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <View style={styles.notaAcademica}>
+                    <Text style={styles.notaAcademicaTitulo}>📋 Decisión D-003 (sobre el holdout)</Text>
+                    <Text style={styles.notaAcademicaTexto}>{evaluacion.decision_d003.texto}</Text>
+                  </View>
+                </View>
+              )}
             </View>
           </View>
         )}

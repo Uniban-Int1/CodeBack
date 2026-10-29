@@ -24,7 +24,7 @@ app.add_middleware(
 
 from fastapi import Depends
 
-from app.api import ingesta, insumos, planes, recomendacion
+from app.api import ingesta, insumos, modelos, planes, recomendacion
 from app.core.seguridad import verificar_token_integracion
 
 # D-010/D-018: la verificación de token solo bloquea si INTEGRACION_TOKEN está configurado
@@ -43,6 +43,8 @@ app.include_router(
 app.include_router(
     insumos.router, prefix="/api/v1", tags=["insumos"], dependencies=_dep_integracion
 )
+# Solo lectura sobre datos sintéticos declarados: no es un endpoint de integración.
+app.include_router(modelos.router, prefix="/api/v1", tags=["modelos"])
 
 
 @app.get("/salud", tags=["sistema"])
