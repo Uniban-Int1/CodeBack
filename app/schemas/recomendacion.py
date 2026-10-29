@@ -71,9 +71,10 @@ class SolicitudRecomendacion(BaseModel):
         # 2. Traducir aforamiento (estimatedPlants, confidence, period)
         aforamiento = data.get("aforamiento")
         if isinstance(aforamiento, dict):
-            if "estimatedPlants" in aforamiento and data.get("num_plantas_estimado") is None:
+            # Un valor null (permitido en el contrato Equipo 1 -> Equipo 3) cuenta como faltante, no como error interno.
+            if aforamiento.get("estimatedPlants") is not None and data.get("num_plantas_estimado") is None:
                 data["num_plantas_estimado"] = int(aforamiento["estimatedPlants"])
-            if "confidence" in aforamiento and data.get("calidad_confianza") is None:
+            if aforamiento.get("confidence") is not None and data.get("calidad_confianza") is None:
                 data["calidad_confianza"] = float(aforamiento["confidence"])
             if "period" in aforamiento and not data.get("periodo"):
                 data["periodo"] = str(aforamiento["period"])

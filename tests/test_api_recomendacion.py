@@ -148,6 +148,19 @@ def test_recomendar_formato_equipo3_sin_ventana_falla_con_error_claro():
     assert "ventana_despacho" in response.text
 
 
+def test_recomendar_confianza_null_responde_422_no_500():
+    """El contrato Equipo 1 -> Equipo 3 permite confidence null; debe reportarse como faltante, no reventar."""
+    payload = {
+        "parcel": {"id": "11111111-1111-4111-8111-111111111111", "areaHa": 2.4},
+        "aforamiento": {"date": "2026-10-27", "period": "2026-W44", "estimatedPlants": 1850, "confidence": None},
+        "inventory": [{"name": "cajas", "quantity": 80}],
+        "ventana_despacho": {"inicio": "2026-10-30T06:00:00", "fin": "2026-10-30T16:00:00"},
+    }
+    response = client.post("/api/v1/recomendar", json=payload)
+    assert response.status_code == 422
+    assert "calidad_confianza" in response.text
+
+
 def test_recomendar_sin_datos_obligatorios_lista_todo_lo_que_falta():
     """Un payload vacío debe reportar TODOS los campos obligatorios ausentes, no solo el primero."""
     response = client.post("/api/v1/recomendar", json={})
