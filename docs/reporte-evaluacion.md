@@ -179,6 +179,30 @@ xychart-beta
     bar [0, 1, 0]
 ```
 
+### Escenario sintético de demostración (`escenario_sintetico.py`)
+
+El conjunto anterior (`3 × valor + 2`) verifica el código, pero es trivial. Para la
+demostración se agregó un escenario sintético con supuestos explícitos: 8 parcelas × 24
+semanas, ciclo real de 11.5 semanas (la fórmula asume 10.5), estacionalidad de ±15 % y ruido
+de 5 %. La predicción determinista se calcula con `proyectar()` y los parámetros vigentes. Se
+reproduce con `python scripts/evaluar_modelos.py` (semilla 2026).
+
+| Bloque | MAE predictivo | MAE determinista | MAE ingenuo |
+|---|---:|---:|---:|
+| fold_1 (W15–W17) | 8.89 | 26.43 | 12.37 |
+| fold_2 (W18–W20) | 8.33 | 12.17 | 19.02 |
+| fold_3 (W21–W23) | 3.73 | 10.12 | 4.87 |
+| fold_4 (W24–W26) | 7.78 | 31.10 | 20.87 |
+| fold_5 (W27–W29) | 8.89 | 36.11 | 11.95 |
+| fold_6 (W30–W32) | 4.90 | 9.55 | 12.86 |
+| **holdout (W33)** | **6.80** | **10.08** | **6.25** |
+
+MAE en racimos por parcela y semana; 8 observaciones comparables por bloque (la línea ingenua
+solo existe para la primera semana de cada bloque). El predictivo supera al determinista en
+todos los bloques, porque aprende el sesgo y la estacionalidad que la fórmula no modela, pero
+la línea ingenua lo supera en el holdout. **D-003 no se cumple** y se mantiene
+`determinista-v1`. El resultado refleja los supuestos del generador, no el campo.
+
 ## 6. T-18 — Error absoluto de insumos
 
 D-015 está vigente. Define la comparación por insumo, parcela y periodo y

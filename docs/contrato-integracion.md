@@ -1,16 +1,156 @@
-# Contrato de integración — v1
+# Contrato de integración — v2
 
-> **Estado:** v1 — PROPUESTA. Los 5 puntos de la sección final se resolvieron con una decisión
-> provisional para no bloquear T-02 y T-06 (ver DECISIONES.md D-008 a D-011). El formato de
-> `parcela_id` ya se confirmó en la integración real (D-016: identificador del sistema de
-> origen, UUID — ya no `P-NNN`). Las demás propuestas siguen marcadas como tales hasta
-> confirmarse con los equipos 1 y 3 en sesión de seguimiento antes de la prueba de integración
-> de la semana 12. Si algún equipo la objeta, se revisa y sube a v2.
+> **Estado:** v2 — refleja la integración **en funcionamiento** con el Equipo 3 (verificada el
+> 28/10/2026 contra los dos backends desplegados; ver `docs/pruebas-integracion.md`).
 > **Responsable de publicar y versionar:** Equipo 2.
 > Los cambios se acuerdan en sesión de seguimiento y se numeran v1, v2…
 
 Somos seis subproyectos, no seis islas. Este documento es la frontera entre los tres equipos
-del proyecto Plátano–Unibán.
+del proyecto Plátano–Unibán. La arquitectura completa está en `docs/arquitectura.md`.
+
+## Cambios de v1 a v2
+
+| Cambio | Por qué | Rompe compatibilidad |
+|---|---|---|
+| Nueva interfaz principal `POST /api/v1/recomendar` (sección siguiente) | Es la que usa el Equipo 3 en producción; v1 no la documentaba | — |
+| `ventana_despacho`, `periodo`, `num_plantas_estimado`, `calidad_confianza` e inventario pasan a ser obligatorios en `/recomendar` | Regla 4: antes se inventaban valores por defecto (D-017) | **Sí** |
+| `parcela_id` es el UUID del sistema de origen, no `P-NNN` | D-016 | No (ya era texto libre) |
+| La respuesta incluye `excedente` por insumo | D-013, pedido en `contrato-equipo2.md` del Equipo 3 | No (campo nuevo) |
+| `POST /ingesta/*` y `GET /planes/{periodo}` quedan definidos pero **sin uso** | En la práctica, el aforamiento llega por el Equipo 3 y el plan se pide por parcela | — |
+
+---
+
+## Interfaz en uso: el Equipo 3 pide la recomendación — `POST /api/v1/recomendar`
+
+URL de producción: `https://platano-logistica-api.onrender.com/api/v1/recomendar`
+Documentación interactiva: `https://platano-logistica-api.onrender.com/docs`
+
+**Quién llama:** el backend del Equipo 3 (`uniban-app-suministros.onrender.com`), cuando el
+productor pide una recomendación en la app. La app nunca nos llama directamente.
+**Autenticación:** ninguna por ahora. Está implementada (`Authorization: Bearer <token>`, D-018),
+pero apagada hasta coordinar la activación. **No** es una cabecera `X-API-Key`.
+**Despertar el servicio:** el plan free de Render duerme el servicio; conviene llamar antes a
+`GET /salud` y usar al menos 90 s de espera (el cliente del Equipo 3 ya lo hace).
+
+### Solicitud
+
+Acepta el formato anidado del Equipo 3 y el formato directo, o ambos a la vez (el directo tiene
+prioridad). Campos usados:
+
+| Dato | Formato anidado (Equipo 3) | Formato directo | Tipo y unidad | Obligatorio |
+|---|---|---|---|---|
+| Parcela | `parcel.id` | `parcela_id` | texto, UUID del sistema de origen | sí |
+| Periodo | `aforamiento.period` | `periodo` | semana ISO, `2026-W44` | sí |
+| Plantas aforadas | `aforamiento.estimatedPlants` | `num_plantas_estimado` | entero, plantas | sí |
+| Confianza del aforamiento | `aforamiento.confidence` | `calidad_confianza` | decimal 0–1 | sí (`null` = faltante) |
+| Inventario de empaque | `inventory[]` (`name`, `quantity`) | `inventario` (`{"cajas": n, ...}`) | unidades; nombres `cajas`, `carton`, `bolsas` | sí |
+| Ventana de despacho | — | `ventana_despacho.inicio` / `.fin` | fecha y hora local, sin zona (`2026-10-30T06:00:00`) | sí |
+| Tiempo de acarreo | — | `tiempo_acarreo_min` | minutos | no (35 por defecto, cable vía) |
+| Vehículo | — | `vehiculo_id`, `capacidad_vehiculo_racimos` | texto; racimos | no (`V-3`, 420) |
+| Área | `parcel.areaHa` | `area_ha` | hectáreas | no (informativa, no entra en el cálculo) |
+
+Se aceptan y **se ignoran**: `producerId`, `parcel.name`, `parcel.activeCycle`,
+`aforamiento.date`, `inventory[].supplyId/category/unit` y `consumptions[]`. Esto último es
+una limitación conocida (ver `docs/cumplimiento-objetivos.md`). En el inventario, si llegan
+varios ítems con el mismo nombre, se conserva el último: el Equipo 3 ya los envía sumados.
+
+Ejemplo real (el que arma el backend del Equipo 3):
+
+```json
+{
+  "producerId": "33333333-3333-4333-8333-333333333333",
+  "parcel": {"id": "11111111-1111-4111-8111-111111111111", "name": "La Esperanza", "areaHa": 2.4},
+  "aforamiento": {"date": "2026-10-29", "period": "2026-W44", "estimatedPlants": 1850, "confidence": 0.87},
+  "inventory": [
+    {"name": "cajas", "category": "Empaque", "unit": "unidad", "quantity": 80},
+    {"name": "carton", "category": "Empaque", "unit": "unidad", "quantity": 120},
+    {"name": "bolsas", "category": "Empaque", "unit": "unidad", "quantity": 200}
+  ],
+  "ventana_despacho": {"inicio": "2026-10-30T06:00:00", "fin": "2026-10-30T16:00:00"},
+  "consumptions": [],
+  "parcela_id": "11111111-1111-4111-8111-111111111111",
+  "periodo": "2026-W44",
+  "num_plantas_estimado": 1850,
+  "area_ha": 2.4,
+  "calidad_confianza": 0.87
+}
+```
+
+**Sobre la ventana:** nadie tiene hoy la ventana real de embarque, así que el Equipo 3 envía
+una sintética. Debe estar **en el futuro respecto al momento de la consulta** (por ejemplo,
+mañana de 06:00 a 16:00). Si se calcula desde la fecha del aforamiento, puede caer en el
+pasado, y `/recomendar` todavía no compara contra la hora actual.
+
+### Respuesta (200)
+
+```json
+{
+  "parcela_id": "11111111-1111-4111-8111-111111111111",
+  "periodo": "2026-W44",
+  "volumen_racimos": 145.6,
+  "fecha_limite_corte": "2026-10-30T12:55:00",
+  "cumple_ventana": true,
+  "version_metodo": "determinista-v1",
+  "item_plan": {
+    "parcela_id": "11111111-1111-4111-8111-111111111111",
+    "fecha_corte": "2026-10-30T12:55:00",
+    "vehiculo_id": "V-3",
+    "orden": 1,
+    "carga_estimada_racimos": 146,
+    "cumple_ventana": true,
+    "motivo": null
+  },
+  "insumos": [
+    {"insumo": "cajas", "fecha": "2026-10-30", "cantidad_requerida": 123.76, "inventario_disponible": 80.0, "deficit": 43.76, "excedente": 0.0},
+    {"insumo": "carton", "fecha": "2026-10-30", "cantidad_requerida": 123.76, "inventario_disponible": 120.0, "deficit": 3.76, "excedente": 0.0},
+    {"insumo": "bolsas", "fecha": "2026-10-30", "cantidad_requerida": 145.6, "inventario_disponible": 200.0, "deficit": 0.0, "excedente": 54.4}
+  ],
+  "metricas": {"cumplimiento_ventana": 1.0, "uso_capacidad": 0.35}
+}
+```
+
+| Campo | Significado | Unidad |
+|---|---|---|
+| `volumen_racimos` | Cosecha proyectada de la parcela en el periodo | racimos |
+| `fecha_limite_corte` | Hora más tardía de corte que aún alcanza la ventana (fin − empaque − acarreo − margen) | fecha y hora local |
+| `cumple_ventana` | El corte, el acarreo y el empaque caben antes del cierre de la ventana | — |
+| `item_plan.carga_estimada_racimos` | Volumen proyectado redondeado | racimos |
+| `insumos[].cantidad_requerida` | volumen × coeficiente de consumo (`config/parametros.yaml`) | unidades |
+| `insumos[].deficit` / `excedente` | Diferencia positiva entre lo requerido y el inventario, en un sentido u otro | unidades |
+| `insumos[].fecha` | Fecha para la que se necesita el insumo (la del corte) | fecha |
+| `metricas.uso_capacidad` | carga / capacidad del vehículo | proporción 0–1 |
+| `version_metodo` | Método que produjo el resultado (D-005) | — |
+
+`cumple_ventana` mide solo el tiempo. Un déficit de insumos no lo vuelve falso: se interpreta
+como "comprar antes de la hora de corte".
+
+### Errores
+
+| Código | Cuándo | Qué hacer |
+|---|---|---|
+| 422 | Falta un dato obligatorio o es `null`. El mensaje lista **todos** los que faltan | Corregir la solicitud; reintentar no sirve |
+| 422 | `ventana_despacho.fin` ≤ `inicio` | Corregir la ventana |
+| 5xx o sin respuesta | Servicio dormido o caído | Reintentar después de `GET /salud` |
+
+Si la ventana no alcanza (acarreo más empaque no caben), la respuesta es **200** con
+`cumple_ventana: false` y `motivo: "ventana_despacho_inalcanzable_por_acarreo_o_empaque"`.
+
+---
+
+## Otros servicios publicados
+
+- `GET /salud` — estado del servicio.
+- `GET /api/v1/modelos/evaluacion` — compara predictivo, determinista e ingenuo sobre un
+  escenario sintético declarado (T-14, D-003). Solo lectura.
+- `GET /api/v1/parametros` — parámetros del dominio vigentes (`config/parametros.yaml`).
+
+---
+
+## Definido en v1, sin uso en el flujo integrado
+
+Las secciones siguientes se mantienen como referencia. En la práctica el Equipo 1 entrega el
+aforamiento al Equipo 3 (`docs/integracion-equipo1.txt` en su repositorio) y el Equipo 3 nos lo
+reenvía dentro de `/recomendar`.
 
 ---
 

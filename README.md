@@ -93,14 +93,17 @@ npm install
 npx expo start
 ```
 
-### Demo en vivo
+### Demos en vivo
 
 ```bash
-python scripts/demo_en_vivo.py
+python scripts/demo_en_vivo.py           # una parcela: recomendación y recálculo interactivo
+python scripts/demo_programacion.py      # varios productores consolidados en vehículos (T-10)
+python scripts/demo_programacion.py 10:00   # mismo plan con la ventana cerrando a las 10:00
+python scripts/evaluar_modelos.py        # predictivo vs. determinista vs. ingenuo (T-14, D-003)
 ```
 
-Script usado para la demostración en sustentación (ver cabecera del script para el
-guion paso a paso).
+Guion completo de la demostración y relación con los objetivos: `docs/cumplimiento-objetivos.md`.
+Arquitectura de los tres equipos: `docs/arquitectura.md`. Pruebas conjuntas: `docs/pruebas-integracion.md`.
 
 ---
 
@@ -129,9 +132,9 @@ CodeBack/
 ├─ frontend/                   # app móvil Expo/React Native — único frontend (D-020)
 ├─ config/parametros.yaml      # tiempos, capacidades, coeficientes (NO en el código)
 ├─ data/                       # muestras y procedencia (pendiente de llenar, ver data/README.md)
-├─ docs/                       # contrato, modelo de datos, inventario de variables, reporte de evaluación
+├─ docs/                       # contrato v2, arquitectura, pruebas de integración, cumplimiento, evaluación
 ├─ migrations/                 # Alembic
-├─ scripts/demo_en_vivo.py     # demo interactiva para sustentación
+├─ scripts/                    # demos de sustentación: demo_en_vivo, demo_programacion, evaluar_modelos
 ├─ render.yaml                 # despliegue del backend en Render (ver sección arriba)
 └─ tests/
    └─ casos/                   # casos de cálculo con respuesta conocida
