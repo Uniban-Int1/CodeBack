@@ -52,10 +52,10 @@
       </td>
       <td>
         <ul>
-          <li><b>Código núcleo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/insumos/estimacion.py"><code>app/core/insumos/estimacion.py</code></a></li>
-          <li><b>Proyección base:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/proyeccion/base.py"><code>app/core/proyeccion/base.py</code></a></li>
-          <li><b>Parámetros:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/config/parametros.yaml"><code>config/parametros.yaml</code></a></li>
-          <li><b>Pruebas unitarias:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_03_estimacion_insumos.py"><code>test_caso_03_estimacion_insumos.py</code></a></li>
+          <li><b>Código núcleo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/insumos/estimacion.py" target="_blank" rel="noopener noreferrer"><code>app/core/insumos/estimacion.py</code></a></li>
+          <li><b>Proyección base:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/proyeccion/base.py" target="_blank" rel="noopener noreferrer"><code>app/core/proyeccion/base.py</code></a></li>
+          <li><b>Parámetros:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/config/parametros.yaml" target="_blank" rel="noopener noreferrer"><code>config/parametros.yaml</code></a></li>
+          <li><b>Pruebas unitarias:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/casos/test_caso_03_estimacion_insumos.py" target="_blank" rel="noopener noreferrer"><code>test_caso_03_estimacion_insumos.py</code></a></li>
         </ul>
       </td>
       <td>
@@ -74,10 +74,10 @@
       </td>
       <td>
         <ul>
-          <li><b>Código modelo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/proyeccion/predictivo.py"><code>app/core/proyeccion/predictivo.py</code></a></li>
-          <li><b>Reporte técnico:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/reporte-evaluacion.md#L9"><code>docs/reporte-evaluacion.md</code> (Línea 9)</a></li>
-          <li><b>Decisión D-003:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md#L66"><code>DECISIONES.md</code> (Línea 66)</a></li>
-          <li><b>Pruebas:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_10_predictivo.py"><code>test_caso_10_predictivo.py</code></a></li>
+          <li><b>Código modelo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/proyeccion/predictivo.py" target="_blank" rel="noopener noreferrer"><code>app/core/proyeccion/predictivo.py</code></a></li>
+          <li><b>Reporte técnico:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/reporte-evaluacion.md" target="_blank" rel="noopener noreferrer"><code>docs/reporte-evaluacion.md (§1 Resumen)</code></a></li>
+          <li><b>Decisión D-003:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md" target="_blank" rel="noopener noreferrer"><code>DECISIONES.md (Regla D-003)</code></a></li>
+          <li><b>Pruebas:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/casos/test_caso_10_predictivo.py" target="_blank" rel="noopener noreferrer"><code>test_caso_10_predictivo.py</code></a></li>
         </ul>
       </td>
       <td>
@@ -96,10 +96,10 @@
       </td>
       <td>
         <ul>
-          <li><b>Heurística:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/logistica/heuristica.py"><code>app/logistica/heuristica.py</code></a></li>
-          <li><b>Fechas límite:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/logistica/fechas.py"><code>app/logistica/fechas.py</code></a></li>
-          <li><b>Restricciones:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/logistica/restricciones.py"><code>app/logistica/restricciones.py</code></a></li>
-          <li><b>Pruebas:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_08_heuristica_programacion.py"><code>test_caso_08_heuristica_programacion.py</code></a></li>
+          <li><b>Heurística:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/programacion/heuristica.py" target="_blank" rel="noopener noreferrer"><code>app/core/programacion/heuristica.py</code></a></li>
+          <li><b>Fechas límite:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/programacion/fechas.py" target="_blank" rel="noopener noreferrer"><code>app/core/programacion/fechas.py</code></a></li>
+          <li><b>Restricciones:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/programacion/restricciones.py" target="_blank" rel="noopener noreferrer"><code>app/core/programacion/restricciones.py</code></a></li>
+          <li><b>Pruebas:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/casos/test_caso_08_heuristica_programacion.py" target="_blank" rel="noopener noreferrer"><code>test_caso_08_heuristica_programacion.py</code></a></li>
         </ul>
       </td>
       <td>
@@ -118,9 +118,9 @@
       </td>
       <td>
         <ul>
-          <li><b>Esquemas Ingesta:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/schemas/ingesta.py"><code>app/schemas/ingesta.py</code></a></li>
-          <li><b>Esquemas Recomendación:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/schemas/recomendacion.py"><code>app/schemas/recomendacion.py</code></a></li>
-          <li><b>Adaptador Equipo 3:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/recomendacion.py#L46-L125"><code>app/api/recomendacion.py</code> (Líneas 46-125)</a></li>
+          <li><b>Esquemas Ingesta:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/schemas/ingesta.py" target="_blank" rel="noopener noreferrer"><code>app/schemas/ingesta.py</code></a></li>
+          <li><b>Esquemas Recomendación:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/schemas/recomendacion.py" target="_blank" rel="noopener noreferrer"><code>app/schemas/recomendacion.py</code></a></li>
+          <li><b>Adaptador Equipo 3:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/recomendacion.py" target="_blank" rel="noopener noreferrer"><code>app/api/recomendacion.py</code></a></li>
         </ul>
       </td>
       <td>
@@ -139,9 +139,9 @@
       </td>
       <td>
         <ul>
-          <li><b>Servicio central:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/servicio.py#L57"><code>app/core/servicio.py</code> (Línea 57)</a></li>
-          <li><b>Pruebas unitarias:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_04_servicio.py"><code>test_caso_04_servicio.py</code></a></li>
-          <li><b>Pruebas de excedentes:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_07_excedente_insumos.py"><code>test_caso_07_excedente_insumos.py</code></a></li>
+          <li><b>Servicio central:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/servicio.py" target="_blank" rel="noopener noreferrer"><code>app/core/servicio.py</code></a></li>
+          <li><b>Pruebas unitarias:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/casos/test_caso_04_servicio.py" target="_blank" rel="noopener noreferrer"><code>test_caso_04_servicio.py</code></a></li>
+          <li><b>Pruebas de excedentes:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/casos/test_caso_07_excedente_insumos.py" target="_blank" rel="noopener noreferrer"><code>test_caso_07_excedente_insumos.py</code></a></li>
         </ul>
       </td>
       <td>
@@ -160,11 +160,11 @@
       </td>
       <td>
         <ul>
-          <li><b>Swagger UI (En vivo):</b> <a href="https://platano-logistica-api.onrender.com/docs"><code>platano-logistica-api.onrender.com/docs</code></a></li>
-          <li><b>ReDoc:</b> <a href="https://platano-logistica-api.onrender.com/redoc"><code>platano-logistica-api.onrender.com/redoc</code></a></li>
-          <li><b>Endpoint directo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/recomendacion.py"><code>app/api/recomendacion.py</code></a></li>
-          <li><b>Endpoint ingesta:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/ingesta.py"><code>app/api/ingesta.py</code></a></li>
-          <li><b>Router principal:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/main.py"><code>app/main.py</code></a></li>
+          <li><b>Swagger UI (En vivo):</b> <a href="https://platano-logistica-api.onrender.com/docs" target="_blank" rel="noopener noreferrer"><code>platano-logistica-api.onrender.com/docs</code></a></li>
+          <li><b>ReDoc:</b> <a href="https://platano-logistica-api.onrender.com/redoc" target="_blank" rel="noopener noreferrer"><code>platano-logistica-api.onrender.com/redoc</code></a></li>
+          <li><b>Endpoint directo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/recomendacion.py" target="_blank" rel="noopener noreferrer"><code>app/api/recomendacion.py</code></a></li>
+          <li><b>Endpoint ingesta:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/ingesta.py" target="_blank" rel="noopener noreferrer"><code>app/api/ingesta.py</code></a></li>
+          <li><b>Router principal:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/main.py" target="_blank" rel="noopener noreferrer"><code>app/main.py</code></a></li>
         </ul>
       </td>
       <td>
@@ -183,9 +183,9 @@
       </td>
       <td>
         <ul>
-          <li><b>Suite completa (191 tests):</b> <a href="https://github.com/Uniban-Int1/CodeBack/tree/develop-jose/tests"><code>tests/</code></a></li>
-          <li><b>Pruebas API integración:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_api_recomendacion.py"><code>tests/test_api_recomendacion.py</code></a></li>
-          <li><b>Trazabilidad D-005:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md#L87"><code>DECISIONES.md</code> (Línea 87)</a></li>
+          <li><b>Suite completa (191 tests):</b> <a href="https://github.com/Uniban-Int1/CodeBack/tree/develop-jose/tests" target="_blank" rel="noopener noreferrer"><code>tests/</code></a></li>
+          <li><b>Pruebas API integración:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_api_recomendacion.py" target="_blank" rel="noopener noreferrer"><code>tests/test_api_recomendacion.py</code></a></li>
+          <li><b>Trazabilidad D-005:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md" target="_blank" rel="noopener noreferrer"><code>DECISIONES.md (Regla D-005)</code></a></li>
         </ul>
       </td>
       <td>
@@ -204,8 +204,8 @@
       </td>
       <td>
         <ul>
-          <li><b>Script CLI interactivo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/scripts/demo_en_vivo.py"><code>scripts/demo_en_vivo.py</code></a></li>
-          <li><b>Pestaña Simulador Móvil:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/frontend/App.js#L366-L425"><code>frontend/App.js</code> (Líneas 366-425)</a></li>
+          <li><b>Script CLI interactivo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/scripts/demo_en_vivo.py" target="_blank" rel="noopener noreferrer"><code>scripts/demo_en_vivo.py</code></a></li>
+          <li><b>Pestaña Simulador Móvil:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/frontend/App.js" target="_blank" rel="noopener noreferrer"><code>frontend/App.js</code></a></li>
         </ul>
       </td>
       <td>
@@ -224,9 +224,9 @@
       </td>
       <td>
         <ul>
-          <li><b>Endpoint en la nube:</b> <a href="https://platano-logistica-api.onrender.com/api/v1/recomendar"><code>POST /api/v1/recomendar</code></a></li>
-          <li><b>Adaptador y normalizador:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/recomendacion.py#L46"><code>app/api/recomendacion.py</code> (Línea 46)</a></li>
-          <li><b>Contrato acordado:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/contrato-integracion.md#L78"><code>docs/contrato-integracion.md</code> (Línea 78)</a></li>
+          <li><b>Endpoint en la nube:</b> <a href="https://platano-logistica-api.onrender.com/api/v1/recomendar" target="_blank" rel="noopener noreferrer"><code>POST /api/v1/recomendar</code></a></li>
+          <li><b>Adaptador y normalizador:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/recomendacion.py" target="_blank" rel="noopener noreferrer"><code>app/api/recomendacion.py</code></a></li>
+          <li><b>Contrato acordado:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/contrato-integracion.md" target="_blank" rel="noopener noreferrer"><code>docs/contrato-integracion.md</code></a></li>
         </ul>
       </td>
       <td>
@@ -245,9 +245,9 @@
       </td>
       <td>
         <ul>
-          <li><b>Registro de Decisiones:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md#L97"><code>DECISIONES.md</code> (Línea 97)</a></li>
-          <li><b>Reporte técnico:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/reporte-evaluacion.md#L26"><code>docs/reporte-evaluacion.md</code> (Línea 26)</a></li>
-          <li><b>Fixtures y pruebas:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_02_proyeccion_determinista.py#L18"><code>test_caso_02_proyeccion_determinista.py</code> (Línea 18)</a></li>
+          <li><b>Registro de Decisiones:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md" target="_blank" rel="noopener noreferrer"><code>DECISIONES.md (Regla D-006)</code></a></li>
+          <li><b>Reporte técnico:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/reporte-evaluacion.md" target="_blank" rel="noopener noreferrer"><code>docs/reporte-evaluacion.md</code></a></li>
+          <li><b>Fixtures y pruebas:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/casos/test_caso_02_proyeccion_determinista.py" target="_blank" rel="noopener noreferrer"><code>test_caso_02_proyeccion_determinista.py</code></a></li>
         </ul>
       </td>
       <td>
@@ -275,49 +275,49 @@
       <td align="center"><b>1</b></td>
       <td><b>Swagger API en Producción</b></td>
       <td>API Docs (OpenAPI / Cloud)</td>
-      <td>🌐 <a href="https://platano-logistica-api.onrender.com/docs"><code>https://platano-logistica-api.onrender.com/docs</code></a></td>
+      <td>🌐 <a href="https://platano-logistica-api.onrender.com/docs" target="_blank" rel="noopener noreferrer"><code>https://platano-logistica-api.onrender.com/docs</code></a></td>
     </tr>
     <tr>
       <td align="center"><b>2</b></td>
       <td><b>Endpoint de Integración POST /recomendar</b></td>
       <td>API REST Endpoint</td>
-      <td>🌐 <a href="https://platano-logistica-api.onrender.com/api/v1/recomendar"><code>https://platano-logistica-api.onrender.com/api/v1/recomendar</code></a></td>
+      <td>🌐 <a href="https://platano-logistica-api.onrender.com/api/v1/recomendar" target="_blank" rel="noopener noreferrer"><code>https://platano-logistica-api.onrender.com/api/v1/recomendar</code></a></td>
     </tr>
     <tr>
       <td align="center"><b>3</b></td>
       <td><b>Contrato de Integración con Equipo 3</b></td>
       <td>Especificación Técnica</td>
-      <td>📄 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/contrato-integracion.md"><code>docs/contrato-integracion.md</code></a></td>
+      <td>📄 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/contrato-integracion.md" target="_blank" rel="noopener noreferrer"><code>docs/contrato-integracion.md</code></a></td>
     </tr>
     <tr>
       <td align="center"><b>4</b></td>
       <td><b>Registro de Decisiones (D-001 a D-006)</b></td>
       <td>Decisiones de Arquitectura (ADR)</td>
-      <td>📄 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md"><code>DECISIONES.md</code></a></td>
+      <td>📄 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md" target="_blank" rel="noopener noreferrer"><code>DECISIONES.md</code></a></td>
     </tr>
     <tr>
       <td align="center"><b>5</b></td>
       <td><b>Reporte Técnico de Evaluación de Modelos</b></td>
       <td>Métricas &amp; Error MAE</td>
-      <td>📄 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/reporte-evaluacion.md"><code>docs/reporte-evaluacion.md</code></a></td>
+      <td>📄 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/reporte-evaluacion.md" target="_blank" rel="noopener noreferrer"><code>docs/reporte-evaluacion.md</code></a></td>
     </tr>
     <tr>
       <td align="center"><b>6</b></td>
       <td><b>Script de Demostración en Vivo</b></td>
       <td>Script CLI (Python)</td>
-      <td>🐍 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/scripts/demo_en_vivo.py"><code>scripts/demo_en_vivo.py</code></a></td>
+      <td>🐍 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/scripts/demo_en_vivo.py" target="_blank" rel="noopener noreferrer"><code>scripts/demo_en_vivo.py</code></a></td>
     </tr>
     <tr>
       <td align="center"><b>7</b></td>
       <td><b>Lógica de Insumos y Fechas de Cosecha</b></td>
       <td>Servicio Central (Core)</td>
-      <td>⚙️ <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/servicio.py"><code>app/core/servicio.py</code></a></td>
+      <td>⚙️ <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/servicio.py" target="_blank" rel="noopener noreferrer"><code>app/core/servicio.py</code></a></td>
     </tr>
     <tr>
       <td align="center"><b>8</b></td>
       <td><b>Repositorio Completo GitHub (develop-jose)</b></td>
       <td>Control de Versiones</td>
-      <td>🐙 <a href="https://github.com/Uniban-Int1/CodeBack/tree/develop-jose"><code>GitHub: Uniban-Int1/CodeBack</code></a></td>
+      <td>🐙 <a href="https://github.com/Uniban-Int1/CodeBack/tree/develop-jose" target="_blank" rel="noopener noreferrer"><code>GitHub: Uniban-Int1/CodeBack</code></a></td>
     </tr>
   </tbody>
 </table>
