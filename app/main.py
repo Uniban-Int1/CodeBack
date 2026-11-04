@@ -23,6 +23,8 @@ app.add_middleware(
 )
 
 from fastapi import Depends
+from fastapi.responses import HTMLResponse
+from pathlib import Path
 
 from app.api import ingesta, insumos, planes, recomendacion
 from app.core.seguridad import verificar_token_integracion
@@ -48,3 +50,12 @@ app.include_router(
 @app.get("/salud", tags=["sistema"])
 def salud():
     return {"estado": "ok", "version_metodo": "heuristica-v1"}
+
+
+@app.get("/entregable", response_class=HTMLResponse, tags=["entregable"])
+def ver_entregable():
+    html_path = Path(__file__).resolve().parent.parent / "entregable.html"
+    if html_path.exists():
+        return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>Entregable no encontrado</h1>", status_code=404)
+
