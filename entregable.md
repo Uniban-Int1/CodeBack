@@ -1,323 +1,61 @@
-# 📊 MATRIZ DE CUMPLIMIENTO DE ENTREGABLES — EQUIPO 2
+# Evidencias de seguimiento — Equipo 2
 
-> **Proyecto Integrador Unibán** • *Backend & Modelos Predictivos / Deterministas • API FastAPI en Render*
+Proyecto UNIBÁN · Logística y planificación de cosecha · Verificado contra el servicio desplegado el 12 de noviembre de 2026.
 
----
+> Este documento reemplaza el índice enviado el 5 de noviembre. Aquel índice enlazaba la rama develop-jose, que no tenía las pruebas de integración ni la relación con los objetivos, y citaba valores de error (18.4 %, 7.2 % y 8.1 %) tomados de una versión preliminar de la interfaz que no salían del código. Aquí todo apunta a la rama main y las cifras se pueden reproducir.
 
-### 📌 Resumen Ejecutivo de Cumplimiento
+## Cómo verificarlo en cinco minutos
 
-<table>
-  <thead>
-    <tr style="background-color: #f0f4f8;">
-      <th align="center" width="25%">📦 Entregables Totales</th>
-      <th align="center" width="25%">🎯 Cumplimiento</th>
-      <th align="center" width="25%">🧪 Pruebas Automatizadas</th>
-      <th align="center" width="25%">🚀 Arquitectura & Despliegue</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center"><h3>10 de 10 Requerimientos</h3></td>
-      <td align="center"><h3><span style="color: #2e7d32;">100%</span></h3></td>
-      <td align="center"><h3>191 tests (100% OK)</h3></td>
-      <td align="center"><h3>FastAPI en Render<br><small>Reglas D-001 a D-006</small></h3></td>
-    </tr>
-  </tbody>
-</table>
+1. Abrir [Swagger (documentación interactiva)](https://platano-logistica-api.onrender.com/docs). La primera carga puede tardar hasta un minuto, porque el servicio gratuito se suspende sin uso.
+2. En Swagger, abrir POST /api/v1/recomendar, pulsar Try it out y Execute con el ejemplo: devuelve la recomendación completa.
+3. Abrir [Evaluación de modelos en vivo](https://platano-logistica-api.onrender.com/api/v1/modelos/evaluacion) en el navegador: devuelve las métricas del modelo predictivo frente al determinista y la línea base.
+4. En el [Repositorio (rama main)](https://github.com/Uniban-Int1/CodeBack/tree/main), ejecutar pytest: 203 pruebas pasan.
 
----
+## Requerimientos del profesor y evidencia comprobable
 
-## 📋 Matriz Detallada de Requerimientos y Evidencias Técnicas
+| # | Requerimiento | Estado | Resultado comprobable | Cómo verificarlo |
+|---|---|---|---|---|
+| 1 | Modelo determinista funcional y validado para cajas, cartón, bolsas y demás insumos | Cumplido | En producción. Caso verificado a mano: 1850 plantas con confianza 0.87 dan 145.6 racimos, corte a las 12:55 y 123.76 cajas requeridas (déficit 43.76 con 80 en inventario). | Swagger, POST /recomendar; tests/casos 02, 03, 06 y 07. [Swagger (documentación interactiva)](https://platano-logistica-api.onrender.com/docs) · [docs/pruebas-integracion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/pruebas-integracion.md) |
+| 2 | Modelo predictivo evaluado, con métricas de error y comparación frente al modelo base | Cumplido con datos sintéticos | MAE en la semana reservada: predictivo 6.80, determinista 10.08, línea base ingenua 6.25 racimos por parcela y semana. El predictivo supera al determinista, pero no a la línea ingenua: por la regla D-003 se mantiene el determinista. | Abrir la evaluación en vivo o ejecutar python scripts/evaluar_modelos.py. [Evaluación de modelos en vivo](https://platano-logistica-api.onrender.com/api/v1/modelos/evaluacion) · [docs/reporte-evaluacion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/reporte-evaluacion.md) |
+| 3 | Módulo funcional de apoyo a la programación de cosecha y despacho | Cumplido | Cinco parcelas de cuatro productores y dos vehículos: con la ventana a las 16:00 se programan 3 de 5 (uso de capacidad 67 %); al adelantar el cierre a las 10:00 cambia el orden y el uso sube a 82 %. | python scripts/demo_programacion.py y luego con 10:00; tests/casos 08 (13 pruebas). [docs/cumplimiento-objetivos.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/cumplimiento-objetivos.md) |
+| 4 | Procesar aforamiento, cosecha esperada, inventarios, consumos y ventanas de despacho | Cumplido | POST /recomendar recibe los cinco. Los consumos de los últimos 90 días vuelven resumidos por insumo. Si falta un dato obligatorio responde 422 con la lista de faltantes en lugar de inventar valores. | Swagger; tests/casos 13 y test_api_recomendacion. [Swagger (documentación interactiva)](https://platano-logistica-api.onrender.com/docs) · [docs/contrato-integracion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/contrato-integracion.md) |
+| 5 | Recomendaciones de abastecimiento con cantidades, déficit o excedente y fechas | Cumplido | Por cajas, cartón y bolsas: cantidad requerida, inventario, déficit, excedente y fecha en que se necesitan. | Respuesta de POST /recomendar. [Swagger (documentación interactiva)](https://platano-logistica-api.onrender.com/docs) |
+| 6 | API funcional y documentada para recibir del Equipo 3 y devolver las recomendaciones | Cumplido | Desplegada en Render y en uso por el backend del Equipo 3. Contrato acordado por ambos equipos. | Swagger y contrato. [Swagger (documentación interactiva)](https://platano-logistica-api.onrender.com/docs) · [Contrato acordado con el Equipo 3](https://github.com/JuanSebastian05/uniban-app-suministros/blob/main/docs/contrato-equipo2.md) |
+| 7 | Evidencia de pruebas, coherencia y trazabilidad | Cumplido | 203 pruebas automáticas, con el cálculo a mano en cada caso. Toda respuesta incluye version_metodo. | pytest; docs/pruebas-integracion.md. [tests/](https://github.com/Uniban-Int1/CodeBack/tree/main/tests) · [docs/pruebas-integracion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/pruebas-integracion.md) |
+| 8 | Demostración: caso conocido, cambio de variables, métricas y visualización en el componente del Equipo 3 | Cumplido | La app Android del Equipo 3 muestra la recomendación que calcula nuestro servicio, con los mismos valores del cálculo a mano (capturas adjuntas al correo). | Capturas adjuntas; docs/pruebas-integracion.md, prueba P3. [docs/pruebas-integracion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/pruebas-integracion.md) |
+| 9 | Datos simulados claramente identificados | Cumplido | No hubo acceso a registros históricos de Unibán (D-019). Todas las fuentes sintéticas están registradas. | data/README.md y DECISIONES.md. [data/README.md](https://github.com/Uniban-Int1/CodeBack/blob/main/data/README.md) · [DECISIONES.md](https://github.com/Uniban-Int1/CodeBack/blob/main/DECISIONES.md) |
 
-<table>
-  <thead>
-    <tr style="background-color: #1b365d; color: #ffffff;">
-      <th align="center" width="4%">#</th>
-      <th align="left" width="24%">Requerimiento del Profesor</th>
-      <th align="center" width="14%">Estado</th>
-      <th align="left" width="28%">Dónde se encuentra en el Repositorio</th>
-      <th align="left" width="30%">Descripción / Evidencia Técnica</th>
-    </tr>
-  </thead>
-  <tbody>
-    <!-- REQUERIMIENTO 1 -->
-    <tr>
-      <td align="center"><b>1</b></td>
-      <td>
-        <b>Modelo determinista completamente funcional y validado</b><br>
-        <small>Cálculo de necesidades de cajas, cartón, bolsas y demás insumos.</small>
-      </td>
-      <td align="center">
-        <b>✅ Cumplido (100%)</b>
-      </td>
-      <td>
-        <ul>
-          <li><b>Código núcleo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/insumos/estimacion.py"><code>app/core/insumos/estimacion.py</code></a></li>
-          <li><b>Proyección base:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/proyeccion/base.py"><code>app/core/proyeccion/base.py</code></a></li>
-          <li><b>Parámetros:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/config/parametros.yaml"><code>config/parametros.yaml</code></a></li>
-          <li><b>Pruebas unitarias:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_03_estimacion_insumos.py"><code>test_caso_03_estimacion_insumos.py</code></a></li>
-        </ul>
-      </td>
-      <td>
-        Modela la cosecha semanal con la física del racimo (<code>1 / 10.5 semanas</code>). A partir del volumen proyectado, deriva cajas, cartón y bolsas con coeficientes técnicos configurables y calcula faltantes y excedentes. Validado con casos de prueba calculados a mano.
-      </td>
-    </tr>
-    <!-- REQUERIMIENTO 2 -->
-    <tr>
-      <td align="center"><b>2</b></td>
-      <td>
-        <b>Modelo predictivo implementado y evaluado</b><br>
-        <small>Métricas de error y comparación vs modelo base.</small>
-      </td>
-      <td align="center">
-        <b>✅ Cumplido (100%)</b>
-      </td>
-      <td>
-        <ul>
-          <li><b>Código modelo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/proyeccion/predictivo.py"><code>app/core/proyeccion/predictivo.py</code></a></li>
-          <li><b>Reporte técnico:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/reporte-evaluacion.md#L9"><code>docs/reporte-evaluacion.md</code> (Línea 9)</a></li>
-          <li><b>Decisión D-003:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md#L66"><code>DECISIONES.md</code> (Línea 66)</a></li>
-          <li><b>Pruebas:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_10_predictivo.py"><code>test_caso_10_predictivo.py</code></a></li>
-        </ul>
-      </td>
-      <td>
-        Implementado con <code>scikit-learn</code> y validación con partición temporal (<code>TimeSeriesSplit</code>). Compara Error MAE contra Línea Base Ingenua (18.4%), Modelo Determinista (7.2%) y Predictivo (8.1%). Aplica la regla <b>D-003</b> manteniendo el determinista en producción por ausencia de datos históricos de Unibán.
-      </td>
-    </tr>
-    <!-- REQUERIMIENTO 3 -->
-    <tr>
-      <td align="center"><b>3</b></td>
-      <td>
-        <b>Módulo funcional de apoyo a la programación de cosecha y despacho</b><br>
-        <small>Dentro del alcance comprometido.</small>
-      </td>
-      <td align="center">
-        <b>✅ Cumplido (100%)</b>
-      </td>
-      <td>
-        <ul>
-          <li><b>Heurística:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/logistica/heuristica.py"><code>app/logistica/heuristica.py</code></a></li>
-          <li><b>Fechas límite:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/logistica/fechas.py"><code>app/logistica/fechas.py</code></a></li>
-          <li><b>Restricciones:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/logistica/restricciones.py"><code>app/logistica/restricciones.py</code></a></li>
-          <li><b>Pruebas:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_08_heuristica_programacion.py"><code>test_caso_08_heuristica_programacion.py</code></a></li>
-        </ul>
-      </td>
-      <td>
-        Algoritmo de 4 pasos que deduce la fecha de corte hacia atrás restando tiempos de empaque y acarreo desde la ventana de despacho fija, ordena parcelas por urgencia y asigna vehículos disponibles respetando capacidades máximas.
-      </td>
-    </tr>
-    <!-- REQUERIMIENTO 4 -->
-    <tr>
-      <td align="center"><b>4</b></td>
-      <td>
-        <b>Capacidad de procesar aforamiento, cosecha, inventarios, consumos y ventanas</b><br>
-        <small>Ingesta y validación de esquemas de datos.</small>
-      </td>
-      <td align="center">
-        <b>✅ Cumplido (100%)</b>
-      </td>
-      <td>
-        <ul>
-          <li><b>Esquemas Ingesta:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/schemas/ingesta.py"><code>app/schemas/ingesta.py</code></a></li>
-          <li><b>Esquemas Recomendación:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/schemas/recomendacion.py"><code>app/schemas/recomendacion.py</code></a></li>
-          <li><b>Adaptador Equipo 3:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/recomendacion.py#L46-L125"><code>app/api/recomendacion.py</code> (Líneas 46-125)</a></li>
-        </ul>
-      </td>
-      <td>
-        Modelos Pydantic v2 con validación estricta que procesan <code>estimatedPlants</code>, <code>confidence</code>, <code>areaHa</code>, inventario (<code>inventory</code>), consumos, mermas/pérdidas y ventanas temporales con fecha/hora de inicio y fin.
-      </td>
-    </tr>
-    <!-- REQUERIMIENTO 5 -->
-    <tr>
-      <td align="center"><b>5</b></td>
-      <td>
-        <b>Generación automática de recomendaciones de abastecimiento</b><br>
-        <small>Cantidades requeridas, déficits o excedentes y fechas previstas.</small>
-      </td>
-      <td align="center">
-        <b>✅ Cumplido (100%)</b>
-      </td>
-      <td>
-        <ul>
-          <li><b>Servicio central:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/servicio.py#L57"><code>app/core/servicio.py</code> (Línea 57)</a></li>
-          <li><b>Pruebas unitarias:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_04_servicio.py"><code>test_caso_04_servicio.py</code></a></li>
-          <li><b>Pruebas de excedentes:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_07_excedente_insumos.py"><code>test_caso_07_excedente_insumos.py</code></a></li>
-        </ul>
-      </td>
-      <td>
-        Función <code>recomendar_insumos()</code> que orquesta todo el flujo en memoria: calcula fecha límite de corte, racimos esperados y requerimiento exacto de insumos, determinando si hay déficit (<code>deficit &gt; 0</code>) o excedente en el inventario actual.
-      </td>
-    </tr>
-    <!-- REQUERIMIENTO 6 -->
-    <tr>
-      <td align="center"><b>6</b></td>
-      <td>
-        <b>API funcional y documentada para recibir información del Equipo 3</b><br>
-        <small>Recepción de entradas y retorno de recomendaciones.</small>
-      </td>
-      <td align="center">
-        <b>✅ Cumplido (100%)</b>
-      </td>
-      <td>
-        <ul>
-          <li><b>Swagger UI (En vivo):</b> <a href="https://platano-logistica-api.onrender.com/docs"><code>platano-logistica-api.onrender.com/docs</code></a></li>
-          <li><b>ReDoc:</b> <a href="https://platano-logistica-api.onrender.com/redoc"><code>platano-logistica-api.onrender.com/redoc</code></a></li>
-          <li><b>Endpoint directo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/recomendacion.py"><code>app/api/recomendacion.py</code></a></li>
-          <li><b>Endpoint ingesta:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/ingesta.py"><code>app/api/ingesta.py</code></a></li>
-          <li><b>Router principal:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/main.py"><code>app/main.py</code></a></li>
-        </ul>
-      </td>
-      <td>
-        API REST en FastAPI desplegada en la nube en Render. Expone <code>POST /api/v1/recomendar</code>, <code>POST /api/v1/ingesta/operacion</code> y <code>GET /api/v1/planes/{periodo}</code>. Genera documentación interactiva OpenAPI disponible públicamente.
-      </td>
-    </tr>
-    <!-- REQUERIMIENTO 7 -->
-    <tr>
-      <td align="center"><b>7</b></td>
-      <td>
-        <b>Evidencia de pruebas que permita establecer coherencia y trazabilidad</b><br>
-        <small>Resultados auditables y consistentes.</small>
-      </td>
-      <td align="center">
-        <b>✅ Cumplido (100%)</b>
-      </td>
-      <td>
-        <ul>
-          <li><b>Suite completa (191 tests):</b> <a href="https://github.com/Uniban-Int1/CodeBack/tree/develop-jose/tests"><code>tests/</code></a></li>
-          <li><b>Pruebas API integración:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_api_recomendacion.py"><code>tests/test_api_recomendacion.py</code></a></li>
-          <li><b>Trazabilidad D-005:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md#L87"><code>DECISIONES.md</code> (Línea 87)</a></li>
-        </ul>
-      </td>
-      <td>
-        191 pruebas automáticas pasando al 100% en <code>pytest</code>. Cada respuesta y plan incluye el campo obligatorio <code>version_metodo</code> (<code>determinista-v1</code>), permitiendo auditar la regla y el origen de cada recomendación.
-      </td>
-    </tr>
-    <!-- REQUERIMIENTO 8 -->
-    <tr>
-      <td align="center"><b>8</b></td>
-      <td>
-        <b>Demostración obligatoria: Productor y parcela con variación de variables</b><br>
-        <small>Modificación de variables de entrada y recálculo automático.</small>
-      </td>
-      <td align="center">
-        <b>✅ Cumplido (100%)</b>
-      </td>
-      <td>
-        <ul>
-          <li><b>Script CLI interactivo:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/scripts/demo_en_vivo.py"><code>scripts/demo_en_vivo.py</code></a></li>
-          <li><b>Pestaña Simulador Móvil:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/frontend/App.js#L366-L425"><code>frontend/App.js</code> (Líneas 366-425)</a></li>
-        </ul>
-      </td>
-      <td>
-        Script ejecutable en consola (<code>python3 scripts/demo_en_vivo.py</code>) y simulador interactivo en la app móvil. Ejecutan el caso de la parcela <b>P-018</b> y permiten variar en tiempo real la ventana de despacho o el stock de cajas, mostrando el recálculo inmediato.
-      </td>
-    </tr>
-    <!-- REQUERIMIENTO 9 -->
-    <tr>
-      <td align="center"><b>9</b></td>
-      <td>
-        <b>Recepción y visualización mediante el componente del Equipo 3</b><br>
-        <small>Integración de extremo a extremo.</small>
-      </td>
-      <td align="center">
-        <b>✅ Cumplido (100%)</b>
-      </td>
-      <td>
-        <ul>
-          <li><b>Endpoint en la nube:</b> <a href="https://platano-logistica-api.onrender.com/api/v1/recomendar"><code>POST /api/v1/recomendar</code></a></li>
-          <li><b>Adaptador y normalizador:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/api/recomendacion.py#L46"><code>app/api/recomendacion.py</code> (Línea 46)</a></li>
-          <li><b>Contrato acordado:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/contrato-integracion.md#L78"><code>docs/contrato-integracion.md</code> (Línea 78)</a></li>
-        </ul>
-      </td>
-      <td>
-        El endpoint acepta el JSON exacto de la app móvil del Equipo 3 (IDs en UUID, ciclo activo y lista de inventario), y devuelve el objeto JSON con la hora límite de corte y el déficit de cajas/bolsas para que el Equipo 3 lo pinte en su pantalla.
-      </td>
-    </tr>
-    <!-- REQUERIMIENTO 10 -->
-    <tr>
-      <td align="center"><b>10</b></td>
-      <td>
-        <b>Identificación y diferenciación explícita de datos simulados</b><br>
-        <small>Transparencia técnica sin falsas validaciones reales.</small>
-      </td>
-      <td align="center">
-        <b>✅ Cumplido (100%)</b>
-      </td>
-      <td>
-        <ul>
-          <li><b>Registro de Decisiones:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md#L97"><code>DECISIONES.md</code> (Línea 97)</a></li>
-          <li><b>Reporte técnico:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/reporte-evaluacion.md#L26"><code>docs/reporte-evaluacion.md</code> (Línea 26)</a></li>
-          <li><b>Fixtures y pruebas:</b> <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/tests/test_caso_02_proyeccion_determinista.py#L18"><code>test_caso_02_proyeccion_determinista.py</code> (Línea 18)</a></li>
-        </ul>
-      </td>
-      <td>
-        Cumplimiento formal de la regla <b>D-006</b>: como Unibán no ha entregado registros históricos reales, todos los datos simulados llevan el prefijo <code>sintetico_</code> y se declaran explícitamente en el código y reportes, sin presentarlos falsamente como validación real de campo.
-      </td>
-    </tr>
-  </tbody>
-</table>
+## Pruebas de integración con el Equipo 3 (28/10/2026)
 
----
+| Prueba | Resultado esperado | Resultado obtenido |
+|---|---|---|
+| P1 · Ambos servicios responden | 200 | Correcto. Equipo 3 /health y Equipo 2 /salud responden 200 |
+| P2 · Solicitud completa con el formato del Equipo 3 | Recomendación con los valores del cálculo a mano | Correcto: 145.6 racimos, corte 12:55, déficits 96.67 / 76.67 / 141.2 |
+| P3 · Recomendación visible en la app del Equipo 3 | Mismos valores que P2 | Correcto (capturas adjuntas) |
+| P4 · Solicitud sin ventana de despacho | 422 que nombra el campo | Correcto |
+| P5 · Aforamiento con confianza nula | 422 que nombra el campo | Daba 500; corregido, ahora 422 |
+| P6 · Consultas que leen la base de datos | 404 si no hay plan | Daban 500 (tablas sin crear); corregido |
+| P7 · Ventana de despacho ya pasada | No se recomienda sobre una hora pasada | Corregido: el Equipo 3 calcula la ventana desde la fecha de consulta |
+| P8 · Simulador de la app del Equipo 2 contra el servicio desplegado | Respuesta en vivo | Correcto |
+| P9 · Llamada sin cabecera de autenticación | Aceptada (autenticación apagada, D-018) | Correcto |
 
-## 🔗 Enlaces Directos y Repositorio de Evidencias (GitHub & Cloud)
+## Límites conocidos
 
-<table>
-  <thead>
-    <tr style="background-color: #1b365d; color: #ffffff;">
-      <th align="center" width="5%">#</th>
-      <th align="left" width="30%">Recurso / Entregable</th>
-      <th align="left" width="25%">Categoría / Tipo</th>
-      <th align="left" width="40%">Acceso Directo (Hipervínculo Web)</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center"><b>1</b></td>
-      <td><b>Swagger API en Producción</b></td>
-      <td>API Docs (OpenAPI / Cloud)</td>
-      <td>🌐 <a href="https://platano-logistica-api.onrender.com/docs"><code>https://platano-logistica-api.onrender.com/docs</code></a></td>
-    </tr>
-    <tr>
-      <td align="center"><b>2</b></td>
-      <td><b>Endpoint de Integración POST /recomendar</b></td>
-      <td>API REST Endpoint</td>
-      <td>🌐 <a href="https://platano-logistica-api.onrender.com/api/v1/recomendar"><code>https://platano-logistica-api.onrender.com/api/v1/recomendar</code></a></td>
-    </tr>
-    <tr>
-      <td align="center"><b>3</b></td>
-      <td><b>Contrato de Integración con Equipo 3</b></td>
-      <td>Especificación Técnica</td>
-      <td>📄 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/contrato-integracion.md"><code>docs/contrato-integracion.md</code></a></td>
-    </tr>
-    <tr>
-      <td align="center"><b>4</b></td>
-      <td><b>Registro de Decisiones (D-001 a D-006)</b></td>
-      <td>Decisiones de Arquitectura (ADR)</td>
-      <td>📄 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/DECISIONES.md"><code>DECISIONES.md</code></a></td>
-    </tr>
-    <tr>
-      <td align="center"><b>5</b></td>
-      <td><b>Reporte Técnico de Evaluación de Modelos</b></td>
-      <td>Métricas &amp; Error MAE</td>
-      <td>📄 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/docs/reporte-evaluacion.md"><code>docs/reporte-evaluacion.md</code></a></td>
-    </tr>
-    <tr>
-      <td align="center"><b>6</b></td>
-      <td><b>Script de Demostración en Vivo</b></td>
-      <td>Script CLI (Python)</td>
-      <td>🐍 <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/scripts/demo_en_vivo.py"><code>scripts/demo_en_vivo.py</code></a></td>
-    </tr>
-    <tr>
-      <td align="center"><b>7</b></td>
-      <td><b>Lógica de Insumos y Fechas de Cosecha</b></td>
-      <td>Servicio Central (Core)</td>
-      <td>⚙️ <a href="https://github.com/Uniban-Int1/CodeBack/blob/develop-jose/app/core/servicio.py"><code>app/core/servicio.py</code></a></td>
-    </tr>
-    <tr>
-      <td align="center"><b>8</b></td>
-      <td><b>Repositorio Completo GitHub (develop-jose)</b></td>
-      <td>Control de Versiones</td>
-      <td>🐙 <a href="https://github.com/Uniban-Int1/CodeBack/tree/develop-jose"><code>GitHub: Uniban-Int1/CodeBack</code></a></td>
-    </tr>
-  </tbody>
-</table>
+- Todos los datos son sintéticos: el predictivo no se evaluó con cosecha real.
+- La ventana de despacho real no la tiene ningún equipo; se usa una de demostración.
+- El servicio integrado evalúa una parcela por solicitud; la consolidación de varios productores se demuestra con el script.
+- La proyección no usa la edad del racimo, porque el Equipo 1 no la entrega.
+- Los coeficientes de consumo no están calibrados con datos de Unibán.
+
+## Documentos
+
+- [docs/pruebas-integracion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/pruebas-integracion.md)
+- [docs/cumplimiento-objetivos.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/cumplimiento-objetivos.md)
+- [docs/arquitectura.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/arquitectura.md)
+- [Arquitectura (versión visual)](https://claude.ai/artifact/A2zTfZnMfwJXo82vvJxGjJ)
+- [docs/reporte-evaluacion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/reporte-evaluacion.md)
+- [Contrato acordado con el Equipo 3](https://github.com/JuanSebastian05/uniban-app-suministros/blob/main/docs/contrato-equipo2.md)
+- [docs/contrato-integracion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/contrato-integracion.md)
+- [docs/guia-backend-equipo2.pdf](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/guia-backend-equipo2.pdf)
+- [DECISIONES.md](https://github.com/Uniban-Int1/CodeBack/blob/main/DECISIONES.md)
+- [data/README.md](https://github.com/Uniban-Int1/CodeBack/blob/main/data/README.md)
