@@ -22,7 +22,7 @@ Proyecto UNIBÁN · Logística y planificación de cosecha · Verificado contra 
 | 5 | Recomendaciones de abastecimiento con cantidades, déficit o excedente y fechas | Cumplido | Por cajas, cartón y bolsas: cantidad requerida, inventario, déficit, excedente y fecha en que se necesitan. | Respuesta de POST /recomendar. [Swagger (documentación interactiva)](https://platano-logistica-api.onrender.com/docs) |
 | 6 | API funcional y documentada para recibir del Equipo 3 y devolver las recomendaciones | Cumplido | Desplegada en Render y en uso por el backend del Equipo 3. Contrato acordado por ambos equipos. | Swagger y contrato. [Swagger (documentación interactiva)](https://platano-logistica-api.onrender.com/docs) · [Contrato acordado con el Equipo 3](https://github.com/JuanSebastian05/uniban-app-suministros/blob/main/docs/contrato-equipo2.md) |
 | 7 | Evidencia de pruebas, coherencia y trazabilidad | Cumplido | 203 pruebas automáticas, con el cálculo a mano en cada caso. Toda respuesta incluye version_metodo. | pytest; docs/pruebas-integracion.md. [tests/](https://github.com/Uniban-Int1/CodeBack/tree/main/tests) · [docs/pruebas-integracion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/pruebas-integracion.md) |
-| 8 | Demostración: caso conocido, cambio de variables, métricas y visualización en el componente del Equipo 3 | Cumplido | La app Android del Equipo 3 muestra la recomendación que calcula nuestro servicio, con los mismos valores del cálculo a mano (capturas adjuntas al correo). | Capturas adjuntas; docs/pruebas-integracion.md, prueba P3. [docs/pruebas-integracion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/pruebas-integracion.md) |
+| 8 | Demostración: caso conocido, cambio de variables, métricas y visualización en el componente del Equipo 3 | Cumplido | La app Android del Equipo 3 muestra la recomendación que calcula nuestro servicio, con los mismos valores del cálculo a mano (ver la sección de capturas). | Capturas del Equipo 3 en este documento; docs/pruebas-integracion.md, prueba P3. [docs/pruebas-integracion.md](https://github.com/Uniban-Int1/CodeBack/blob/main/docs/pruebas-integracion.md) |
 | 9 | Datos simulados claramente identificados | Cumplido | No hubo acceso a registros históricos de Unibán (D-019). Todas las fuentes sintéticas están registradas. | data/README.md y DECISIONES.md. [data/README.md](https://github.com/Uniban-Int1/CodeBack/blob/main/data/README.md) · [DECISIONES.md](https://github.com/Uniban-Int1/CodeBack/blob/main/DECISIONES.md) |
 
 ## Pruebas de integración con el Equipo 3 (28/10/2026)
@@ -31,13 +31,20 @@ Proyecto UNIBÁN · Logística y planificación de cosecha · Verificado contra 
 |---|---|---|
 | P1 · Ambos servicios responden | 200 | Correcto. Equipo 3 /health y Equipo 2 /salud responden 200 |
 | P2 · Solicitud completa con el formato del Equipo 3 | Recomendación con los valores del cálculo a mano | Correcto: 145.6 racimos, corte 12:55, déficits 96.67 / 76.67 / 141.2 |
-| P3 · Recomendación visible en la app del Equipo 3 | Mismos valores que P2 | Correcto (capturas adjuntas) |
+| P3 · Recomendación visible en la app del Equipo 3 | Valores iguales al cálculo a mano | Correcto (ver capturas) |
 | P4 · Solicitud sin ventana de despacho | 422 que nombra el campo | Correcto |
 | P5 · Aforamiento con confianza nula | 422 que nombra el campo | Daba 500; corregido, ahora 422 |
 | P6 · Consultas que leen la base de datos | 404 si no hay plan | Daban 500 (tablas sin crear); corregido |
 | P7 · Ventana de despacho ya pasada | No se recomienda sobre una hora pasada | Corregido: el Equipo 3 calcula la ventana desde la fecha de consulta |
 | P8 · Simulador de la app del Equipo 2 contra el servicio desplegado | Respuesta en vivo | Correcto |
 | P9 · Llamada sin cabecera de autenticación | Aceptada (autenticación apagada, D-018) | Correcto |
+
+## La recomendación en la app del Equipo 3
+
+Verificación a mano: 50 × (1/10.5) × 0.158 × (1 − 0.05) = 0.7 racimos; hora límite 16:00 − 3 h 05 min = 12:55; vehículo V-3. Son las fórmulas y los parámetros del Equipo 2. La app del Equipo 3 redondea las unidades de empaque hacia arriba. Fuente: [evidencias del Equipo 3](https://github.com/JuanSebastian05/uniban-app-suministros/tree/main/docs/validacion/evidencias).
+
+![Aforamiento registrado en la app del Equipo 3: parcela Montañita, 0.25 ha, 50 plantas, confianza 15.8 %.](docs/evidencias/equipo3-07-aforamiento.jpeg)
+![Recomendación calculada por el servicio del Equipo 2 para ese aforamiento y mostrada en la app del Equipo 3.](docs/evidencias/equipo3-08-recomendacion.jpeg)
 
 ## Límites conocidos
 

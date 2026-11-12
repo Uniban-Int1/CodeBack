@@ -156,12 +156,6 @@
     .pasos { background: #e8f0fe; border-left: 4px solid #1a73e8; padding: 14px 18px; border-radius: 4px; font-size: 14px; margin-bottom: 24px; }
     .pasos ol { margin: 6px 0 0; padding-left: 20px; }
     .pasos li { margin-bottom: 4px; }
-  
-    .badge.warn { background-color: #fef7e0; color: #9a5b00; }
-    .nota { background: #fef7e0; border-left: 4px solid #f9ab00; padding: 12px 16px; border-radius: 4px; font-size: 14px; color: #3c4043; margin-bottom: 24px; }
-    .pasos { background: #e8f0fe; border-left: 4px solid #1a73e8; padding: 14px 18px; border-radius: 4px; font-size: 14px; margin-bottom: 24px; }
-    .pasos ol { margin: 6px 0 0; padding-left: 20px; }
-    .pasos li { margin-bottom: 4px; }
   </style>
 </head>
 <body>
@@ -200,7 +194,7 @@
       <tr><td class="center">5</td><td><b>Recomendaciones de abastecimiento con cantidades, déficit o excedente y fechas</b></td><td class="center"><span class="badge">Cumplido</span></td><td>Por cajas, cartón y bolsas: cantidad requerida, inventario, déficit, excedente y fecha en que se necesitan.</td><td>Respuesta de POST /recomendar.<br><a href="https://platano-logistica-api.onrender.com/docs">Swagger (documentación interactiva)</a></td></tr>
       <tr><td class="center">6</td><td><b>API funcional y documentada para recibir del Equipo 3 y devolver las recomendaciones</b></td><td class="center"><span class="badge">Cumplido</span></td><td>Desplegada en Render y en uso por el backend del Equipo 3. Contrato acordado por ambos equipos.</td><td>Swagger y contrato.<br><a href="https://platano-logistica-api.onrender.com/docs">Swagger (documentación interactiva)</a> · <a href="https://github.com/JuanSebastian05/uniban-app-suministros/blob/main/docs/contrato-equipo2.md">Contrato acordado con el Equipo 3</a></td></tr>
       <tr><td class="center">7</td><td><b>Evidencia de pruebas, coherencia y trazabilidad</b></td><td class="center"><span class="badge">Cumplido</span></td><td>203 pruebas automáticas, con el cálculo a mano en cada caso. Toda respuesta incluye version_metodo.</td><td>pytest; docs/pruebas-integracion.md.<br><a href="https://github.com/Uniban-Int1/CodeBack/tree/main/tests">tests/</a> · <a href="https://github.com/Uniban-Int1/CodeBack/blob/main/docs/pruebas-integracion.md">docs/pruebas-integracion.md</a></td></tr>
-      <tr><td class="center">8</td><td><b>Demostración: caso conocido, cambio de variables, métricas y visualización en el componente del Equipo 3</b></td><td class="center"><span class="badge">Cumplido</span></td><td>La app Android del Equipo 3 muestra la recomendación que calcula nuestro servicio, con los mismos valores del cálculo a mano (capturas adjuntas al correo).</td><td>Capturas adjuntas; docs/pruebas-integracion.md, prueba P3.<br><a href="https://github.com/Uniban-Int1/CodeBack/blob/main/docs/pruebas-integracion.md">docs/pruebas-integracion.md</a></td></tr>
+      <tr><td class="center">8</td><td><b>Demostración: caso conocido, cambio de variables, métricas y visualización en el componente del Equipo 3</b></td><td class="center"><span class="badge">Cumplido</span></td><td>La app Android del Equipo 3 muestra la recomendación que calcula nuestro servicio, con los mismos valores del cálculo a mano (ver la sección de capturas).</td><td>Capturas del Equipo 3 en este documento; docs/pruebas-integracion.md, prueba P3.<br><a href="https://github.com/Uniban-Int1/CodeBack/blob/main/docs/pruebas-integracion.md">docs/pruebas-integracion.md</a></td></tr>
       <tr><td class="center">9</td><td><b>Datos simulados claramente identificados</b></td><td class="center"><span class="badge">Cumplido</span></td><td>No hubo acceso a registros históricos de Unibán (D-019). Todas las fuentes sintéticas están registradas.</td><td>data/README.md y DECISIONES.md.<br><a href="https://github.com/Uniban-Int1/CodeBack/blob/main/data/README.md">data/README.md</a> · <a href="https://github.com/Uniban-Int1/CodeBack/blob/main/DECISIONES.md">DECISIONES.md</a></td></tr>
     </tbody>
   </table>
@@ -211,7 +205,7 @@
     <tbody>
       <tr><td>P1 · Ambos servicios responden</td><td>200</td><td>Correcto. Equipo 3 /health y Equipo 2 /salud responden 200</td></tr>
       <tr><td>P2 · Solicitud completa con el formato del Equipo 3</td><td>Recomendación con los valores del cálculo a mano</td><td>Correcto: 145.6 racimos, corte 12:55, déficits 96.67 / 76.67 / 141.2</td></tr>
-      <tr><td>P3 · Recomendación visible en la app del Equipo 3</td><td>Mismos valores que P2</td><td>Correcto (capturas adjuntas)</td></tr>
+      <tr><td>P3 · Recomendación visible en la app del Equipo 3</td><td>Valores iguales al cálculo a mano</td><td>Correcto (ver capturas)</td></tr>
       <tr><td>P4 · Solicitud sin ventana de despacho</td><td>422 que nombra el campo</td><td>Correcto</td></tr>
       <tr><td>P5 · Aforamiento con confianza nula</td><td>422 que nombra el campo</td><td>Daba 500; corregido, ahora 422</td></tr>
       <tr><td>P6 · Consultas que leen la base de datos</td><td>404 si no hay plan</td><td>Daban 500 (tablas sin crear); corregido</td></tr>
@@ -220,6 +214,13 @@
       <tr><td>P9 · Llamada sin cabecera de autenticación</td><td>Aceptada (autenticación apagada, D-018)</td><td>Correcto</td></tr>
     </tbody>
   </table>
+
+  <div class="section-title">La recomendación en la app del Equipo 3</div>
+  <p style="font-size:14px">Verificación a mano: 50 × (1/10.5) × 0.158 × (1 − 0.05) = 0.7 racimos; hora límite 16:00 − 3 h 05 min = 12:55; vehículo V-3. Son las fórmulas y los parámetros del Equipo 2. La app del Equipo 3 redondea las unidades de empaque hacia arriba. Fuente: <a href="https://github.com/JuanSebastian05/uniban-app-suministros/tree/main/docs/validacion/evidencias">evidencias de validación del Equipo 3</a>.</p>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+    <figure style="margin:0;flex:1 1 260px;max-width:320px"><img src="https://raw.githubusercontent.com/Uniban-Int1/CodeBack/main/docs/evidencias/equipo3-07-aforamiento.jpeg" alt="Aforamiento registrado en la app del Equipo 3: parcela Montañita, 0.25 ha, 50 plantas, confianza 15.8 %." style="width:100%;border:1px solid #dadce0;border-radius:8px"><figcaption style="font-size:12px;color:#5f6368">Aforamiento registrado en la app del Equipo 3: parcela Montañita, 0.25 ha, 50 plantas, confianza 15.8 %.</figcaption></figure>
+    <figure style="margin:0;flex:1 1 260px;max-width:320px"><img src="https://raw.githubusercontent.com/Uniban-Int1/CodeBack/main/docs/evidencias/equipo3-08-recomendacion.jpeg" alt="Recomendación calculada por el servicio del Equipo 2 para ese aforamiento y mostrada en la app del Equipo 3." style="width:100%;border:1px solid #dadce0;border-radius:8px"><figcaption style="font-size:12px;color:#5f6368">Recomendación calculada por el servicio del Equipo 2 para ese aforamiento y mostrada en la app del Equipo 3.</figcaption></figure>
+  </div>
 
   <div class="section-title">Límites conocidos</div>
   <ul>
